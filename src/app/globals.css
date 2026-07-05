@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── Design tokens (Tailwind v4 CSS-first @theme) ─────────────────────────
+   Semantic color + font tokens for acpsec.app. Hex values preserved EXACTLY
+   from the acpsec.app v1 HTML per the Phase 0 audit. Dark theme only.
+
+   Each --color-* generates the matching bg-*, text-*, border-* utilities
+   (e.g. --color-primary → bg-primary / text-primary / border-primary). These
+   ADD to Tailwind's default palette; the defaults (blue-500, etc.) still work.
+
+   Source-of-truth documentation: src/styles/tokens.md
+--------------------------------------------------------------------------- */
+@theme {
+  /* Brand */
+  --color-primary: #0052FF;      /* Coinbase blue — CTAs, links, brand accent */
+  --color-success: #00C087;      /* positive states, high Trust Score grades */
+  --color-warning: #F5A623;      /* medium scores, caution */
+  --color-warning-alt: #F0C000;  /* secondary warn — monitor UI */
+  --color-danger: #FF4444;       /* destructive, critical grades, errors */
+  --color-danger-alt: #FF6B6B;   /* secondary danger */
+  --color-purple: #A78BFA;       /* rare accent, use sparingly */
+
+  /* Neutrals — dark surfaces */
+  --color-bg: #0A0B0D;            /* main background, near-black */
+  --color-surface: #1C1D1F;       /* elevated cards, sections */
+  --color-surface-hover: #26272A; /* hover state for surfaces */
+  --color-border: #2A2B2E;        /* subtle dividers */
+
+  /* Foregrounds */
+  --color-fg: #FFFFFF;            /* primary text on dark */
+  --color-fg-muted: #A1A5AB;      /* ~70% grey, secondary text */
+  --color-fg-subtle: #6B6E75;     /* ~50% grey, tertiary text, hints */
+
+  /* Typography — Inter is wired via next/font in src/app/layout.tsx */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark-only theme: drives browser-native scrollbars, form controls, etc. */
+html {
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Global defaults (equivalent to bg-bg text-fg font-sans on the body). */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
 }
