@@ -27,6 +27,24 @@ const EXPECTED_COLORS: Record<string, string> = {
   fg: "#FFFFFF",
   "fg-muted": "#A1A5AB",
   "fg-subtle": "#6B6E75",
+  critical: "#FF6B00", // score tier CRITICAL (Task 3.3) — from BAND_COLORS
+};
+
+// Typography scale (Task 3.3) — every value actually appears in the v1 HTML.
+const EXPECTED_TEXT: Record<string, string> = {
+  display: "3rem",
+  heading: "1.8rem",
+  title: "1.2rem",
+  body: "1rem",
+  caption: "0.85rem",
+  micro: "0.75rem",
+};
+
+// Semantic spacing composites (Task 3.3).
+const EXPECTED_SPACING: Record<string, string> = {
+  page: "2rem",
+  section: "3rem",
+  card: "1.5rem",
 };
 
 describe("design tokens (@theme in globals.css)", () => {
@@ -47,4 +65,27 @@ describe("design tokens (@theme in globals.css)", () => {
   it("font-sans token chains through the Inter CSS variable", () => {
     expect(css).toMatch(/--font-sans\s*:\s*var\(--font-inter\)/);
   });
+});
+
+describe("typography scale (@theme --text-*)", () => {
+  for (const [name, size] of Object.entries(EXPECTED_TEXT)) {
+    it(`--text-${name} === ${size}`, () => {
+      // `\s*:` anchors so --text-title doesn't match --text-title--line-height.
+      const re = new RegExp(`--text-${name}\\s*:\\s*${size}\\s*;`, "i");
+      expect(css).toMatch(re);
+    });
+    it(`--text-${name} has a line-height`, () => {
+      const re = new RegExp(`--text-${name}--line-height\\s*:`, "i");
+      expect(css).toMatch(re);
+    });
+  }
+});
+
+describe("semantic spacing composites (@theme --spacing-*)", () => {
+  for (const [name, size] of Object.entries(EXPECTED_SPACING)) {
+    it(`--spacing-${name} === ${size}`, () => {
+      const re = new RegExp(`--spacing-${name}\\s*:\\s*${size}\\s*;`, "i");
+      expect(css).toMatch(re);
+    });
+  }
 });

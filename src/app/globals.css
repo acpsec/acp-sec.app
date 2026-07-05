@@ -19,6 +19,7 @@
   --color-danger: #FF4444;       /* destructive, critical grades, errors */
   --color-danger-alt: #FF6B6B;   /* secondary danger */
   --color-purple: #A78BFA;       /* rare accent, use sparingly */
+  --color-critical: #FF6B00;     /* score tier CRITICAL (red-orange) — from BAND_COLORS */
 
   /* Neutrals — dark surfaces */
   --color-bg: #0A0B0D;            /* main background, near-black */
@@ -31,7 +32,34 @@
   --color-fg-muted: #A1A5AB;      /* ~70% grey, secondary text */
   --color-fg-subtle: #6B6E75;     /* ~50% grey, tertiary text, hints */
 
-  /* Typography — Inter is wired via next/font in src/app/layout.tsx */
+  /* ── Typography scale ──────────────────────────────────────────────────
+     Consolidated from the (inconsistent) HTML lama sizes into ONE semantic
+     scale. Every value below actually appears in the v1 HTML — nothing is
+     invented. Each --text-* generates a text-* utility (font-size +
+     line-height). Font WEIGHT stays on Tailwind defaults (font-semibold,
+     font-bold) — no weight tokens. */
+  --text-display: 3rem;      /* page hero */
+  --text-display--line-height: 1.1;
+  --text-heading: 1.8rem;    /* h1 within a page */
+  --text-heading--line-height: 1.2;
+  --text-title: 1.2rem;      /* h2 / card title */
+  --text-title--line-height: 1.3;
+  --text-body: 1rem;         /* paragraphs */
+  --text-body--line-height: 1.5;
+  --text-caption: 0.85rem;   /* small text, labels */
+  --text-caption--line-height: 1.4;
+  --text-micro: 0.75rem;     /* badges, tags */
+  --text-micro--line-height: 1.4;
+
+  /* ── Semantic spacing composites ───────────────────────────────────────
+     ADD-ONLY named spacings (page/section/card) on top of Tailwind's default
+     numeric scale (p-4 etc. still work). Values match the dominant HTML lama
+     paddings. Generate p-page, px-section, gap-card, etc. */
+  --spacing-page: 2rem;      /* page-level padding */
+  --spacing-section: 3rem;   /* between major sections */
+  --spacing-card: 1.5rem;    /* inside cards / panels */
+
+  /* Typography family — Inter is wired via next/font in src/app/layout.tsx */
   --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
