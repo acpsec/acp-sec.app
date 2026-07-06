@@ -4,7 +4,10 @@
 // now the API client end-to-end via useHealth(). NOT real UI — replaced in
 // Groups 4–6.
 import { scoreToColorClass, scoreToTier } from "@/lib/scoring";
+import { useControls } from "@/lib/hooks/useControls";
 import { useHealth } from "@/lib/hooks/useHealth";
+import { useLeaderboard } from "@/lib/hooks/useLeaderboard";
+import { useScore } from "@/lib/hooks/useScore";
 
 const SAMPLE_SCORES = [95, 78, 60, 40, 20, 5];
 
@@ -26,6 +29,44 @@ function ApiStatus() {
       API status: {data?.service} · acpsec_available={String(data?.acpsec_available)} ·
       scanner_protected={String(data?.scanner_protected)}
     </p>
+  );
+}
+
+// Compact read-endpoint verification (3.5b) — replaced by real pages in Groups 4–6.
+function ReadEndpoints() {
+  const score = useScore();
+  const controls = useControls();
+  const leaderboard = useLeaderboard();
+
+  return (
+    <div className="space-y-1 text-caption text-fg-muted">
+      <p>
+        score:{" "}
+        {score.isLoading
+          ? "…"
+          : score.isError
+            ? "error"
+            : score.data?.ok
+              ? score.data.data.band
+              : "empty"}
+      </p>
+      <p>
+        controls:{" "}
+        {controls.isLoading
+          ? "…"
+          : controls.isError
+            ? "error"
+            : `${controls.data?.checks.length} checks / ${controls.data?.asf_controls.length} asf`}
+      </p>
+      <p>
+        leaderboard:{" "}
+        {leaderboard.isLoading
+          ? "…"
+          : leaderboard.isError
+            ? "error"
+            : `${leaderboard.data?.count} agents`}
+      </p>
+    </div>
   );
 }
 
@@ -53,6 +94,7 @@ export default function Home() {
       </div>
 
       <ApiStatus />
+      <ReadEndpoints />
     </div>
   );
 }
