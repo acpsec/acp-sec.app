@@ -1,9 +1,33 @@
-// Placeholder home (Tasks 3.2–3.4): the shared layout (Header + Footer) now
-// wraps this content; below verifies the typography scale, semantic colors, and
-// the score→tier→color utility. NOT real UI — replaced in Groups 4–6.
+"use client";
+
+// Placeholder home (Tasks 3.2–3.5a). Verifies the design tokens/typography and
+// now the API client end-to-end via useHealth(). NOT real UI — replaced in
+// Groups 4–6.
 import { scoreToColorClass, scoreToTier } from "@/lib/scoring";
+import { useHealth } from "@/lib/hooks/useHealth";
 
 const SAMPLE_SCORES = [95, 78, 60, 40, 20, 5];
+
+function ApiStatus() {
+  const { data, isLoading, isError, error } = useHealth();
+
+  if (isLoading) {
+    return <p className="text-caption text-fg-muted">API status: checking…</p>;
+  }
+  if (isError) {
+    return (
+      <p className="text-caption text-danger">
+        API status: unreachable — {error.message}
+      </p>
+    );
+  }
+  return (
+    <p className="text-caption text-success">
+      API status: {data?.service} · acpsec_available={String(data?.acpsec_available)} ·
+      scanner_protected={String(data?.scanner_protected)}
+    </p>
+  );
+}
 
 export default function Home() {
   return (
@@ -28,9 +52,7 @@ export default function Home() {
         ))}
       </div>
 
-      <a href="#" className="text-caption font-medium text-primary hover:underline">
-        primary link
-      </a>
+      <ApiStatus />
     </div>
   );
 }

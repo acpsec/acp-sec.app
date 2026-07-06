@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { Providers } from "./providers";
 
 // Inter via next/font/google — self-hosted, no layout shift. Coinbase Sans (the
 // v1 typeface) is not publicly available, so Inter is the locked substitute.
@@ -28,9 +29,11 @@ export default function RootLayout({
       {/* min-h-screen + flex-col + main flex-1 keeps the footer at the bottom
           on short pages. Single shared shell applies to every route. */}
       <body className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <Providers>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
