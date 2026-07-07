@@ -81,6 +81,28 @@ describe("DashboardView", () => {
     expect(useDashboardStore.getState().source).toBe("session");
   });
 
+  it("renders the ControlsGrid breakdown when the loaded score has controls", async () => {
+    const data = score("aixbt", 82);
+    data.controls = [
+      {
+        ctrl: "AUTH-01",
+        name: "Agent identity declared",
+        dimension: "AUTH",
+        dimension_name: "Authentication",
+        max: 3,
+        score: 2,
+        severity: "HIGH",
+        status: "warn",
+      },
+    ];
+    mockScore({ isLoading: false, isError: false, data: { ok: true, data } });
+    render(<DashboardView />);
+    await waitFor(() =>
+      expect(screen.getByText("Security Controls")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("AUTH-01")).toBeInTheDocument();
+  });
+
   it("handoff: a fresh handoff WINS over the server session score", async () => {
     readHandoffMock.mockReturnValue({
       data: score("FromLeaderboard", 55),

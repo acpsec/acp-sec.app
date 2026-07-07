@@ -7,6 +7,7 @@ import { useControls } from "@/lib/hooks/useControls";
 import { useScore } from "@/lib/hooks/useScore";
 import { useDashboardStore } from "@/lib/stores/dashboardStore";
 
+import { ControlsGrid } from "./ControlsGrid";
 import { HeaderActions } from "./HeaderActions";
 import { ScoreSummary } from "./ScoreSummary";
 
@@ -66,11 +67,14 @@ export function DashboardView() {
             Could not load score — {score.error?.message}
           </p>
         ) : (
-          <ScoreSummary
-            scoreData={scoreData}
-            source={source}
-            cachedAt={cachedAt}
-          />
+          <>
+            <ScoreSummary
+              scoreData={scoreData}
+              source={source}
+              cachedAt={cachedAt}
+            />
+            {scoreData && <ControlsGrid controls={scoreData.controls} />}
+          </>
         )}
       </div>
     </div>
