@@ -151,3 +151,89 @@ export type LeaderboardResponse = {
   count: number;
   agents: Agent[];
 };
+
+// ── Score writes (3.5c) ────────────────────────────────────────────────────
+
+/** POST /api/score — raw acpsec or native ASF JSON (the normaliser accepts both). */
+export type ScoreCreateRequest = Record<string, unknown>;
+export type ScoreCreateResponse = { ok: true; data: ScoreData };
+
+/** POST /api/score/manual — manually entered control scores. */
+export type ScoreManualRequest = {
+  controls: unknown[];
+  agent_name?: string;
+  [key: string]: unknown;
+};
+export type ScoreManualResponse = { ok: true; data: ScoreData };
+
+/** DELETE /api/score. */
+export type ScoreDeleteResponse = { ok: true };
+
+// ── Leaderboard auth (3.5c) ────────────────────────────────────────────────
+
+export type LeaderboardAuthRequest = { password: string };
+/** 200 body. `token: "open"` when no password is configured. A wrong password
+ *  is a 401 → surfaces as ApiError, not this type. Sets the lb_session cookie. */
+export type LeaderboardAuthResponse = { ok: true; token?: string };
+
+// ── Scanner (3.5c) ─────────────────────────────────────────────────────────
+
+/** X/Twitter profile scraped via Nitter. */
+export type ScannerProfile = {
+  username: string;
+  display_name: string;
+  bio: string;
+  website: string;
+  avatar_url: string;
+  source: string;
+  error?: string | null;
+  [key: string]: unknown;
+};
+export type ScannerLookupRequest = { username: string };
+export type ScannerLookupResponse = { ok: true; data: ScannerProfile };
+
+export type ScanMode = "root" | "exact";
+export type ScannerScanRequest = {
+  url: string;
+  agent_name?: string;
+  username?: string;
+  scan_mode?: ScanMode;
+  scraped?: boolean;
+  x_bio?: string;
+};
+/** Scan `data` is the full scan wire format (same shape as a report). */
+export type ScannerScanResponse = { ok: true; data: ReportData };
+
+export type ScannerBulkRequest = { usernames: string[]; scan_mode?: ScanMode };
+/** One entry per requested username; a failed item carries `ok:false + error`. */
+export type BulkResult =
+  | { username: string; ok: true; data: ReportData }
+  | { username: string; ok: false; error: string };
+export type ScannerBulkResponse = {
+  ok: true;
+  count: number;
+  results: BulkResult[];
+};
+
+// ── Onchain (3.5c) ─────────────────────────────────────────────────────────
+
+export type OnchainCheckRequest = { wallet: string };
+/** `registered`: true (log found) | false (none in window) | null (inconclusive). */
+export type OnchainResult = {
+  contract: string;
+  wallet: string;
+  registered: boolean | null;
+  log_count: number;
+  block_from: number | null;
+  block_to: number | null;
+  rpc_url: string;
+  error: string | null;
+};
+export type OnchainCheckResponse = { ok: true; data: OnchainResult };
+
+// ── Chat (3.5c) — blocking (non-streaming) ─────────────────────────────────
+
+export type ChatRole = "user" | "assistant";
+export type ChatMessage = { role: ChatRole; content: string };
+export type ChatRequest = { messages: ChatMessage[] };
+export type ChatResponse = { ok: true; reply: string };

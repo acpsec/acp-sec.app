@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { fetchApi } from "@/lib/api/client";
-import { fetchLeaderboard } from "@/lib/api/leaderboard";
+import { fetchLeaderboard, leaderboardAuth } from "@/lib/api/leaderboard";
+import { ApiError } from "@/lib/api/errors";
 import type { LeaderboardResponse } from "@/lib/api/types";
 
 vi.mock("@/lib/api/client", () => ({ fetchApi: vi.fn() }));
@@ -24,5 +25,26 @@ describe("fetchLeaderboard", () => {
   it("propagates errors", async () => {
     fetchApiMock.mockRejectedValue(new Error("boom"));
     await expect(fetchLeaderboard()).rejects.toThrow("boom");
+  });
+});
+
+describe("leaderboardAuth", () => {
+  it("POSTs {password} to /api/leaderboard/auth", async () => {
+    fetchApiMock.mockResolvedValue({ ok: true });
+    await expect(leaderboardAuth("s3cret")).resolves.toEqual({ ok: true });
+    expect(fetchApiMock).toHaveBeenCalledWith("/api/leaderboard/auth", {
+      method: "POST",
+      body: JSON.stringify({ password: "s3cret" }),
+    });
+  });
+
+  it("propagates a 401 ApiError for a wrong password", async () => {
+    fetchApiMock.mockRejectedValue(
+      new ApiError(401, { ok: false, error: "Incorrect password" }),
+    );
+    await expect(leaderboardAuth("nope")).rejects.toMatchObject({
+      status: 401,
+      body: { error: "Incorrect password" },
+    });
   });
 });
