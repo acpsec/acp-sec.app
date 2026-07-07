@@ -3,7 +3,7 @@ import { create } from "zustand";
 import type { ScoreData } from "@/lib/api/types";
 
 /** Where the currently-displayed score came from. */
-export type ScoreSource = "session" | "handoff" | null;
+export type ScoreSource = "session" | "handoff" | "upload" | null;
 
 export interface DashboardState {
   /** Current score (from GET /api/score or the localStorage handoff). Not

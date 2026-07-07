@@ -33,6 +33,11 @@ describe("dashboardStore", () => {
     expect(state().cachedAt).toBe(123456);
   });
 
+  it("accepts the 'upload' source (Load Report)", () => {
+    state().setSource("upload");
+    expect(state().source).toBe("upload");
+  });
+
   it("setSource defaults cachedAt to null", () => {
     state().setSource("session");
     expect(state().source).toBe("session");

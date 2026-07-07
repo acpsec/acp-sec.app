@@ -10,6 +10,12 @@ import { useDashboardStore } from "@/lib/stores/dashboardStore";
 vi.mock("@/lib/hooks/useScore", () => ({ useScore: vi.fn() }));
 vi.mock("@/lib/hooks/useControls", () => ({ useControls: vi.fn(() => ({})) }));
 vi.mock("@/lib/handoff", () => ({ readHandoff: vi.fn(() => null) }));
+// Dashboard now mounts LoadReportDropzone (useCreateScore → needs a QueryClient)
+// and ScoreChart (chart.js → no real canvas in jsdom). Stub both.
+vi.mock("@/lib/hooks/useScoreMutation", () => ({
+  useCreateScore: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+vi.mock("react-chartjs-2", () => ({ Radar: () => <div data-testid="radar" /> }));
 vi.mock("next/link", () => ({
   default: ({ href, children, ...p }: { href: string; children: React.ReactNode }) => (
     <a href={href} {...p}>
