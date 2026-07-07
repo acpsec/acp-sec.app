@@ -6,23 +6,10 @@ import { useEffect, useState } from "react";
 
 import { fetchReport } from "@/lib/api/report";
 import type { Agent } from "@/lib/api/types";
+import { writeHandoff } from "@/lib/handoff";
 
 import { AgentAvatar } from "./AgentAvatar";
 import { TierBadge } from "./TierBadge";
-
-// Cross-page handoff keys — the dashboard (Group 5.1) reads these on load.
-const LAST_SCAN_KEY = "acpsec_last_scan";
-const LAST_SCAN_TIME_KEY = "acpsec_last_scan_time";
-
-// Module-scope (not render): stash the fetched report for the dashboard handoff.
-function stashReport(data: unknown): void {
-  try {
-    localStorage.setItem(LAST_SCAN_KEY, JSON.stringify(data));
-    localStorage.setItem(LAST_SCAN_TIME_KEY, String(Date.now()));
-  } catch {
-    /* quota / private mode — ignore */
-  }
-}
 
 type FilterKey = "all" | "defi" | "trading" | "basemcp" | "token";
 
@@ -100,7 +87,7 @@ export function LeaderboardTable({ agents }: { agents: Agent[] }) {
     setPendingId(a.id);
     try {
       const res = await fetchReport(a.id);
-      stashReport(res.data);
+      writeHandoff(res.data);
       router.push("/");
     } catch {
       setNoReportAgent(a);
