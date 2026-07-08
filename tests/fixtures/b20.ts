@@ -1,4 +1,5 @@
-import type { B20ScanResult } from "@/lib/api/types";
+import { ApiError } from "@/lib/api/errors";
+import type { B20ErrorCode, B20ScanResult } from "@/lib/api/types";
 
 /**
  * A realistic `B20ScanResult` fixture, faithful to the live engine
@@ -71,3 +72,24 @@ export const b20ScanResultFixture: B20ScanResult = {
   scanner_version: "0.1.0",
   scanned_at: "2026-07-08T00:00:00Z",
 };
+
+/** HTTP status the backend pairs with each error code (b20-endpoint-schema.md). */
+const B20_ERROR_STATUS: Record<B20ErrorCode, number> = {
+  invalid_address: 400,
+  unsupported_chain: 400,
+  not_b20: 400,
+  rpc_unreachable: 503,
+};
+
+/**
+ * An `ApiError` shaped exactly like a failed `POST /api/b20/scan` — a bare
+ * `{error, detail}` body with the code on `.body.error`. One factory keeps the
+ * error fixtures DRY across the flow test (never construct these inline).
+ */
+export function b20ApiError(code: B20ErrorCode): ApiError {
+  return new ApiError(
+    B20_ERROR_STATUS[code],
+    { error: code, detail: `${code} (fixture detail)` },
+    code,
+  );
+}
