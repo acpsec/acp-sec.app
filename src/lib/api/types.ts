@@ -237,3 +237,76 @@ export type ChatRole = "user" | "assistant";
 export type ChatMessage = { role: ChatRole; content: string };
 export type ChatRequest = { messages: ChatMessage[] };
 export type ChatResponse = { ok: true; reply: string };
+
+// ── B20 Trust Score scanner (7.2b) ─────────────────────────────────────────
+// Mirrors acp-sec-b20 `ScanResult.to_dict()`, per
+// acp-sec/docs/b20-endpoint-schema.md (authoritative — generated from the live
+// engine models). Ported verbatim from the acpsec-app scaffold with zero
+// field-level divergence; only the scaffold's `ApiError` interface is renamed
+// (it collided with our ApiError class) → see B20ErrorBody below.
+//
+// POST /api/b20/scan is SAME-ORIGIN (Opsi A — no NEXT_PUBLIC_B20_API_URL), PUBLIC
+// (not scanner-token gated), and — unlike the {ok,data} endpoints — returns a
+// bare {error, detail} body on failure (no envelope).
+
+/** One finding inside a dimension. `severity`: CRITICAL | High | Medium | Low. */
+export type B20Finding = { severity: string; detail: string };
+
+/** A scored dimension (Layer 2). */
+export type B20Dimension = {
+  score: number;
+  weight: number;
+  findings: B20Finding[];
+};
+
+/** What the issuer can do to holders (Layer 2 detail). null = unknown/unrated. */
+export type B20IssuerPowers = {
+  can_freeze: boolean | null;
+  can_seize: boolean | null;
+  can_pause: boolean | null;
+  can_mint_unbounded: boolean | null;
+  supply_cap: string | null;
+  admin_addresses: string[];
+  admin_is_multisig: boolean | null;
+  mint_role_holders: string[];
+  pause_role_holders: string[];
+};
+
+/** Success body of POST /api/b20/scan — one payload for all three disclosure
+ *  layers (holder / trader / researcher). */
+export type B20ScanResult = {
+  token: string;
+  chain_id: number;
+  variant: string | null; // "ASSET" | "STABLECOIN"
+  name: string | null;
+  symbol: string | null;
+  decimals: number | null;
+  currency_code: string | null;
+  trust_score: number; // Layer 1 (confidence-adjusted)
+  raw_score: number; // Layer 3 (composite before the unrated multiplier)
+  grade: string; // A-F
+  rated: boolean;
+  multiplier: number; // 1.0 all-rated, else 0.5
+  unrated_dimensions: string[];
+  is_critical: boolean;
+  critical_reasons: string[];
+  dimensions: Record<string, B20Dimension>;
+  issuer_powers: B20IssuerPowers;
+  deployed_via_factory: string | null;
+  scanner_version: string;
+  scanned_at: string; // ISO-8601 UTC
+};
+
+/** Request body. `chain_id` ∈ {8453, 84532}; the client defaults it to Base
+ *  Sepolia (84532) — the only chain the /b20 route targets in V1. */
+export type B20ScanRequest = { address: string; chain_id?: number };
+
+/** Distinct error codes the endpoint returns; carried on `ApiError.body.error`. */
+export type B20ErrorCode =
+  | "invalid_address" // 400 — address fails the 0x-40-hex regex
+  | "unsupported_chain" // 400 — chain_id not in {8453, 84532}
+  | "not_b20" // 400 — target is not a B20 token / not initialised / feature off
+  | "rpc_unreachable"; // 503 — RPC init failed or node returned nothing
+
+/** Bare `{error, detail}` failure body (no envelope). Assignable to ApiErrorBody. */
+export type B20ErrorBody = { error: B20ErrorCode; detail: string };
