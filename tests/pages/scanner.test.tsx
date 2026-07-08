@@ -1,45 +1,55 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import ScannerPage from "@/app/scanner/page";
 import { useScannerStore } from "@/lib/stores/scannerStore";
 
-beforeEach(() => useScannerStore.getState().reset());
+beforeEach(() => {
+  useScannerStore.getState().reset();
+  localStorage.clear();
+});
 
-describe("ScannerPage (6.2a foundation)", () => {
-  it("renders the hero + shell", () => {
-    render(<ScannerPage />);
+function renderPage() {
+  const client = new QueryClient({
+    defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={client}>
+      <ScannerPage />
+    </QueryClientProvider>,
+  );
+}
+
+describe("ScannerPage", () => {
+  it("renders the hero + step-1 lookup", () => {
+    renderPage();
     expect(
       screen.getByRole("heading", { name: /Agent Scanner/ }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("X Username")).toBeInTheDocument();
   });
 
-  it("renders the URL-normalisation control (root default)", () => {
-    render(<ScannerPage />);
-    expect(screen.getByRole("radio", { name: /Root domain/ })).toBeChecked();
-  });
-
-  it("shows the empty-results placeholder before any scan", () => {
-    render(<ScannerPage />);
+  it("starts on step 1 (no confirm/results yet)", () => {
+    renderPage();
+    expect(useScannerStore.getState().step).toBe(1);
     expect(
-      screen.getByText("Enter a handle and scan to see results."),
-    ).toBeInTheDocument();
+      screen.queryByText("✅ Confirm Agent Details"),
+    ).not.toBeInTheDocument();
   });
 
+  // Producer-only regression guard (6.2a): the scanner must NEVER consume a
+  // handoff, even when one is present in localStorage — that contract belongs
+  // to the dashboard.
   it("does NOT read a handoff on mount (scanner is producer-only)", () => {
-    // Even with a handoff present in localStorage, the scanner must not
-    // consume it — that contract belongs to the dashboard.
     localStorage.setItem(
       "acpsec_last_scan",
       JSON.stringify({ agent_name: "X", controls: [] }),
     );
     localStorage.setItem("acpsec_last_scan_time", String(Date.now()));
-    render(<ScannerPage />);
+    renderPage();
     expect(useScannerStore.getState().scanResult).toBeNull();
-    expect(
-      screen.getByText("Enter a handle and scan to see results."),
-    ).toBeInTheDocument();
-    localStorage.clear();
+    expect(useScannerStore.getState().step).toBe(1);
+    expect(screen.getByLabelText("X Username")).toBeInTheDocument();
   });
 });

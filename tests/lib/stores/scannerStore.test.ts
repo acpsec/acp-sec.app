@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { ApiError } from "@/lib/api/errors";
 import type {
   OnchainCheckResponse,
+  ScannerLookupResponse,
   ScannerScanResponse,
 } from "@/lib/api/types";
 import { useScannerStore } from "@/lib/stores/scannerStore";
@@ -34,16 +35,64 @@ const ONCHAIN: OnchainCheckResponse = {
   },
 };
 
+const LOOKUP = (
+  over: Partial<ScannerLookupResponse["data"]> = {},
+): ScannerLookupResponse => ({
+  ok: true,
+  data: {
+    username: "aixbt_agent",
+    display_name: "aixbt",
+    bio: "an agent",
+    website: "https://aixbt.tech",
+    avatar_url: "https://img/a.png",
+    source: "nitter",
+    ...over,
+  },
+});
+
 beforeEach(() => state().reset());
 
 describe("scannerStore", () => {
   it("has the correct initial state", () => {
     expect(state().handle).toBe("");
     expect(state().scanMode).toBe("root"); // matches HTML lama default
+    expect(state().step).toBe(1);
+    expect(state().lookupResult).toBeNull();
+    expect(state().agentName).toBe("");
+    expect(state().url).toBe("");
+    expect(state().wallet).toBe("");
     expect(state().scanResult).toBeNull();
     expect(state().onchainStatus).toBeNull();
     expect(state().isScanning).toBe(false);
     expect(state().scanError).toBeNull();
+  });
+
+  it("setStep changes the wizard position", () => {
+    state().setStep(2);
+    expect(state().step).toBe(2);
+  });
+
+  it("beginConfirm seeds agentName/url from the profile and advances to step 2", () => {
+    state().beginConfirm(LOOKUP());
+    expect(state().lookupResult).not.toBeNull();
+    expect(state().agentName).toBe("aixbt"); // display_name
+    expect(state().url).toBe("https://aixbt.tech"); // website
+    expect(state().step).toBe(2);
+  });
+
+  it("beginConfirm falls back to username when display_name is empty", () => {
+    state().beginConfirm(LOOKUP({ display_name: "", website: "" }));
+    expect(state().agentName).toBe("aixbt_agent"); // username fallback
+    expect(state().url).toBe(""); // no website
+  });
+
+  it("confirm fields are independently editable", () => {
+    state().setAgentName("Custom");
+    state().setUrl("https://x.io/docs");
+    state().setWallet("0xabc");
+    expect(state().agentName).toBe("Custom");
+    expect(state().url).toBe("https://x.io/docs");
+    expect(state().wallet).toBe("0xabc");
   });
 
   it("setHandle updates handle", () => {
@@ -83,9 +132,11 @@ describe("scannerStore", () => {
     expect(state().scanError).toBe(err);
   });
 
-  it("reset clears all state back to initial", () => {
+  it("reset clears all state and returns to step 1", () => {
     state().setHandle("@x");
     state().setScanMode("exact");
+    state().beginConfirm(LOOKUP());
+    state().setWallet("0xabc");
     state().setScanResult(SCAN);
     state().setOnchainStatus(ONCHAIN);
     state().setScanning(true);
@@ -95,6 +146,11 @@ describe("scannerStore", () => {
 
     expect(state().handle).toBe("");
     expect(state().scanMode).toBe("root");
+    expect(state().step).toBe(1);
+    expect(state().lookupResult).toBeNull();
+    expect(state().agentName).toBe("");
+    expect(state().url).toBe("");
+    expect(state().wallet).toBe("");
     expect(state().scanResult).toBeNull();
     expect(state().onchainStatus).toBeNull();
     expect(state().isScanning).toBe(false);

@@ -1,15 +1,14 @@
 "use client";
 
-import { HandleInput } from "@/components/scanner/HandleInput";
-import { UrlNormalizationControl } from "@/components/scanner/UrlNormalizationControl";
+import { ScannerView } from "@/components/scanner/ScannerView";
 
 /**
- * Agent Scanner page — Task 6.2a foundation (shell + inputs only).
+ * Agent Scanner page — 3-step wizard (lookup → confirm → results).
  *
- * Deferred: lookup + scan execution + result rendering (6.2b), bulk (6.2c).
- * Not built (deviation, documented): SSE streaming (/api/scan/stream) and
- * analytics (/api/analytics-event) — neither endpoint exists in the backend.
- * Scanner is the handoff *producer*, so there is no handoff-read on mount.
+ * Deviations (documented): SSE streaming (/api/scan/stream) and analytics
+ * (/api/analytics-event) are skipped — neither endpoint exists in the backend;
+ * the scan is a single blocking POST. Scanner is the handoff *producer* only,
+ * so there is no handoff-read on mount. Bulk scan is deferred (6.2c).
  */
 export default function ScannerPage() {
   return (
@@ -29,19 +28,7 @@ export default function ScannerPage() {
         </p>
       </header>
 
-      <div className="mt-8 flex flex-col gap-5">
-        <HandleInput />
-
-        {/* URL-normalisation mode — relocated into the Confirm step and made
-            conditional on a sub-path URL in 6.2b. Shown here for foundation. */}
-        <UrlNormalizationControl />
-
-        {/* Empty results placeholder — the scan flow + result panels land in
-            6.2b. */}
-        <p className="rounded-lg border border-border bg-surface px-4 py-10 text-center text-caption text-fg-muted">
-          Enter a handle and scan to see results.
-        </p>
-      </div>
+      <ScannerView />
     </div>
   );
 }
