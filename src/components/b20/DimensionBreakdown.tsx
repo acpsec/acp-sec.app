@@ -58,8 +58,9 @@ export function DimensionBreakdown({ result }: { result: B20ScanResult }) {
           data-testid="layer-2"
           className="space-y-5 border-t border-border px-6 py-5"
         >
-          {ORDER.filter((k) => result.dimensions[k]).map((key) => {
+          {ORDER.map((key) => {
             const dim = result.dimensions[key];
+            if (!dim) return null; // dimension absent from this scan — skip
             const isUnrated = unrated.has(key);
             return (
               <div key={key}>

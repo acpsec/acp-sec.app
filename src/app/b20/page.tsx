@@ -1,11 +1,20 @@
+"use client";
+
 /**
- * /b20 — B20 Trust Score scanner (Task 7.2a foundation: shell only).
+ * /b20 — B20 Trust Score scanner (Task 7.2c: form + results wired).
  *
- * Read-only: this page never connects a wallet. wagmi is wired at the layout
- * (for future wallet-enabled pages), but the scan is a plain read of the b20
- * API. The scan form + results land in 7.2c; the API client in 7.2b.
+ * Read-only: this page never connects a wallet. It drives the useB20Scan
+ * mutation (POST /api/b20/scan, same origin) and renders the result across the
+ * three disclosure layers. wagmi is wired at the layout for future
+ * wallet-enabled pages, but the scan itself is a plain API read.
  */
+import { ScanForm } from "@/components/b20/ScanForm";
+import { ScanResult } from "@/components/b20/ScanResult";
+import { useB20Scan } from "@/lib/hooks/useB20";
+
 export default function B20Page() {
+  const scan = useB20Scan();
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-section">
       <header>
@@ -19,21 +28,17 @@ export default function B20Page() {
         </p>
       </header>
 
-      {/* ScanForm placeholder — the address/chain form arrives in 7.2c. */}
-      <div
-        data-testid="b20-scanform-placeholder"
-        className="mt-6 rounded-lg border border-border bg-surface px-4 py-6 text-caption text-fg-muted"
-      >
-        Enter a B20 token address to scan. <span className="text-fg-subtle">(scan form — 7.2c)</span>
-      </div>
+      <ScanForm
+        onScan={(address) => scan.mutate({ address })}
+        pending={scan.isPending}
+        error={scan.error}
+      />
 
-      {/* ScanResult placeholder — the result panels arrive in 7.2c. */}
-      <div
-        data-testid="b20-scanresult-placeholder"
-        className="mt-4 rounded-lg border border-border bg-surface px-4 py-10 text-center text-caption text-fg-subtle"
-      >
-        Results will appear here after a scan.
-      </div>
+      {scan.data && (
+        <div className="mt-8">
+          <ScanResult result={scan.data} />
+        </div>
+      )}
     </div>
   );
 }
