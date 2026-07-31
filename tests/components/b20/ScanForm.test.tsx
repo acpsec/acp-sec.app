@@ -70,7 +70,19 @@ describe("ScanForm", () => {
     await user.click(screen.getByRole("button", { name: /scan/i }));
 
     expect(onScan).toHaveBeenCalledOnce();
-    expect(onScan).toHaveBeenCalledWith(VALID);
+    expect(onScan).toHaveBeenCalledWith(VALID, 84532); // default network = Base Sepolia
+  });
+
+  it("passes the selected network (mainnet) as chain_id to onScan", async () => {
+    const onScan = vi.fn();
+    const user = userEvent.setup();
+    render(<ScanForm onScan={onScan} />);
+
+    await user.selectOptions(screen.getByLabelText(/network/i), "8453");
+    await user.type(screen.getByLabelText(/token address/i), VALID);
+    await user.click(screen.getByRole("button", { name: /scan/i }));
+
+    expect(onScan).toHaveBeenCalledWith(VALID, 8453); // Base Mainnet
   });
 
   it("never calls onScan for malformed input, and shows a validation message", async () => {

@@ -11,8 +11,12 @@ import type { B20ErrorCode } from "@/lib/api/types";
 import { b20ApiError, b20ScanResultFixture } from "../fixtures/b20";
 
 // Mock ONLY the fetcher — useB20Scan, the QueryClient and Wagmi are all real,
-// so this exercises the true wiring across page → form → hook → result.
-vi.mock("@/lib/api/b20", () => ({ scanB20: vi.fn() }));
+// so this exercises the true wiring across page → form → hook → result. Keep the
+// module's other exports real (e.g. B20_DEFAULT_CHAIN_ID, used by ScanForm).
+vi.mock("@/lib/api/b20", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/b20")>()),
+  scanB20: vi.fn(),
+}));
 const scanB20Mock = vi.mocked(scanB20);
 
 const ADDR = "0x1111111111111111111111111111111111111111";
@@ -60,7 +64,7 @@ describe("b20 scan flow", () => {
     renderPage();
     const user = await submit(ADDR);
     // RQ v5 passes a mutation context as a 2nd arg; assert the variables only.
-    expect(scanB20Mock.mock.calls[0]![0]).toEqual({ address: ADDR });
+    expect(scanB20Mock.mock.calls[0]![0]).toEqual({ address: ADDR, chain_id: 84532 });
 
     // Pending: submit disabled with the scanning label.
     await waitFor(() =>

@@ -59,7 +59,7 @@ describe("B20Page (7.2c wired)", () => {
     expect(screen.getByText("72")).toBeInTheDocument();
   });
 
-  it("wires the form submit to the scan mutation ({address})", async () => {
+  it("wires the form submit to the scan mutation ({address, chain_id})", async () => {
     const mutate = vi.fn();
     mockScan({ mutate });
     const user = userEvent.setup();
@@ -69,7 +69,7 @@ describe("B20Page (7.2c wired)", () => {
     await user.type(screen.getByLabelText(/token address/i), addr);
     await user.click(screen.getByRole("button", { name: /scan/i }));
 
-    expect(mutate).toHaveBeenCalledWith({ address: addr });
+    expect(mutate).toHaveBeenCalledWith({ address: addr, chain_id: 84532 });
   });
 
   it("does not render any wallet-connect UI (read-only page)", () => {

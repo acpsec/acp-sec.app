@@ -2,9 +2,10 @@ import { fetchApi } from "./client";
 import type { B20ScanRequest, B20ScanResult } from "./types";
 
 /**
- * Base Sepolia (84532) — the only chain the /b20 route targets in V1 (see
- * web3/config.ts). The backend also accepts Base mainnet (8453), but the UI
- * doesn't wire it until B20 activates there.
+ * Default network for the B20 scanner: Base Sepolia (84532). The backend accepts
+ * both Base Sepolia (84532) and Base mainnet (8453); the UI now exposes both via
+ * the ScanForm network selector (B20 is verified activated on mainnet). This
+ * constant is only the selector's initial value.
  */
 export const B20_DEFAULT_CHAIN_ID = 84532;
 
