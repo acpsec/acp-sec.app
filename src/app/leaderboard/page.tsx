@@ -16,7 +16,7 @@ export default function LeaderboardPage() {
           </span>
         </h1>
         <p className="mt-1 text-caption text-fg-muted">
-          Live ranking of AI agents by ACP-SEC score
+          A manually curated ranking of AI agents by ACP-SEC score
         </p>
       </header>
 
