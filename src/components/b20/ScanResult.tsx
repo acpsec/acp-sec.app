@@ -20,7 +20,8 @@ export function ScanResult({ result }: { result: B20ScanResult }) {
         data-testid="b20-scan-footer"
         className="pt-1 text-center text-micro text-fg-subtle"
       >
-        scanner {result.scanner_version} · {result.scanned_at}
+        {result.chain_id === 8453 ? "Base Mainnet" : "Base Sepolia"} · scanner{" "}
+        {result.scanner_version} · {result.scanned_at}
       </p>
     </div>
   );

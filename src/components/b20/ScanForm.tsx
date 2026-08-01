@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { B20_DEFAULT_CHAIN_ID } from "@/lib/api/b20";
 import { ApiError } from "@/lib/api/errors";
 import type { B20ErrorCode } from "@/lib/api/types";
 
@@ -31,8 +32,8 @@ export function b20ErrorMessage(error: unknown): string {
 }
 
 interface ScanFormProps {
-  /** Called with a validated address when the user submits. */
-  onScan: (address: string) => void;
+  /** Called with a validated address + the selected chain_id when submitted. */
+  onScan: (address: string, chainId: number) => void;
   /** True while a scan is in flight (disables submit). */
   pending?: boolean;
   /** The scan error, if any (an ApiError from useB20Scan). */
@@ -40,12 +41,14 @@ interface ScanFormProps {
 }
 
 /**
- * Address entry for the read-only B20 scanner. V1 targets Base Sepolia only
- * (see web3/config.ts + scanB20's default chain_id), so there is no chain
- * selector and no wallet connect — just a raw address in.
+ * Address + network entry for the read-only B20 scanner. The backend accepts
+ * both Base Sepolia (84532) and Base mainnet (8453); the user picks the network
+ * here and it is passed to scanB20 as chain_id. No wallet connect — just an
+ * address plus a network selector (the scan itself is a plain API read).
  */
 export function ScanForm({ onScan, pending = false, error }: ScanFormProps) {
   const [address, setAddress] = useState("");
+  const [chainId, setChainId] = useState<number>(B20_DEFAULT_CHAIN_ID);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   function submit(e: React.FormEvent) {
@@ -56,7 +59,7 @@ export function ScanForm({ onScan, pending = false, error }: ScanFormProps) {
       return;
     }
     setValidationError(null);
-    onScan(value);
+    onScan(value, chainId);
   }
 
   const message =
@@ -88,9 +91,16 @@ export function ScanForm({ onScan, pending = false, error }: ScanFormProps) {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <span className="rounded-lg border border-border bg-surface px-3 py-2.5 text-caption text-fg-muted sm:w-56">
-          Network: Base Sepolia
-        </span>
+        <select
+          aria-label="Network"
+          value={chainId}
+          onChange={(e) => setChainId(Number(e.target.value))}
+          disabled={pending}
+          className="rounded-lg border border-border bg-surface px-3 py-2.5 text-caption text-fg-muted outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
+        >
+          <option value={84532}>Network: Base Sepolia</option>
+          <option value={8453}>Network: Base Mainnet</option>
+        </select>
         <button
           type="submit"
           disabled={pending}

@@ -29,7 +29,7 @@ export default function B20Page() {
       </header>
 
       <ScanForm
-        onScan={(address) => scan.mutate({ address })}
+        onScan={(address, chainId) => scan.mutate({ address, chain_id: chainId })}
         pending={scan.isPending}
         error={scan.error}
       />
