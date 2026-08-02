@@ -2,7 +2,6 @@
 
 import {
   Activity,
-  Bot,
   LayoutDashboard,
   Search,
   Trophy,
@@ -13,14 +12,13 @@ import { usePathname } from "next/navigation";
 
 type NavItem = { label: string; href: string; icon: LucideIcon };
 
-// Exact labels, hrefs, and ORDER from the HTML lama primary nav (Phase 0 audit,
-// dashboard/acp-sec-dashboard.html <nav class="acpsec-nav">). Do not add/remove.
+// Primary nav. (The "Agents" tab was removed with the SentryAgent teardown — it
+// was the only agent; /agents/sentryagent now redirects to / via next.config.ts.)
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
   { label: "Scanner", href: "/scanner", icon: Search },
   { label: "Monitor", href: "/monitor", icon: Activity },
-  { label: "Agents", href: "/agents/sentryagent", icon: Bot },
 ];
 
 // Dashboard ("/") matches only exactly; others also match nested sub-routes.

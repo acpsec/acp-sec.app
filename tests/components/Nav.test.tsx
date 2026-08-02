@@ -71,10 +71,10 @@ describe("<Nav />", () => {
     );
   });
 
-  it("keeps a nested sub-route active (e.g. /agents/sentryagent under Agents)", () => {
-    mockUsePathname.mockReturnValue("/agents/sentryagent");
+  it("keeps a nested sub-route active (parent match via startsWith)", () => {
+    mockUsePathname.mockReturnValue("/scanner/some-detail");
     render(<Nav />);
-    expect(screen.getByRole("link", { name: /Agents/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Scanner/ })).toHaveAttribute(
       "aria-current",
       "page",
     );
