@@ -100,18 +100,6 @@ export default function SecurityPage() {
       <ul className="mt-2 list-disc space-y-1 pl-5 text-body text-fg-muted">
         <li>acpsec.app web application and API</li>
         <li>ACP-SEC scanner and scoring logic</li>
-        <li>
-          SentryAgent smart contract (
-          <a
-            href="https://sepolia.basescan.org/address/0x7770ED57E3993d4555951a557cd158a6Fb87A470"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            Base Sepolia
-          </a>
-          )
-        </li>
         <li>Authentication and session handling</li>
         <li>Server-side request forgery (SSRF) via scanner endpoints</li>
       </ul>
@@ -196,8 +184,7 @@ export default function SecurityPage() {
       </ul>
 
       <div className="mt-8 rounded-lg border border-border border-l-[3px] border-l-warning bg-surface p-4 text-caption text-fg-muted">
-        ACP-SEC is a <strong>testnet</strong> project. The SentryAgent contract is
-        deployed on Base Sepolia (testnet) only. There are no mainnet funds at
+        ACP-SEC is a <strong>testnet</strong> project. There are no mainnet funds at
         risk in the current deployment.
       </div>
     </article>

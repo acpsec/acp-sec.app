@@ -82,7 +82,7 @@ describe("Security page", () => {
     );
   });
 
-  it("has the security contact, GitHub issues, and basescan links", () => {
+  it("has the security contact and GitHub issues links", () => {
     const { container } = render(<SecurityPage />);
     expect(
       container.querySelector('a[href="mailto:security@acpsec.app"]'),
@@ -90,11 +90,6 @@ describe("Security page", () => {
     expect(
       container.querySelector(
         'a[href="https://github.com/acpsecagent/acp-sec/issues"]',
-      ),
-    ).toBeTruthy();
-    expect(
-      container.querySelector(
-        'a[href="https://sepolia.basescan.org/address/0x7770ED57E3993d4555951a557cd158a6Fb87A470"]',
       ),
     ).toBeTruthy();
   });

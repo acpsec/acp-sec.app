@@ -120,9 +120,9 @@ export type ControlsResponse = {
 export type Movement = "up" | "down" | "same";
 
 /**
- * A leaderboard agent entry. `score`/`tier` are nullable (e.g. the SentryAgent
- * reference entry). `rank`/`movement`/`movement_delta` are added by the
- * endpoint. Many optional scanner-written fields ride the index signature.
+ * A leaderboard agent entry. `score`/`tier` are nullable (an unscored reference
+ * entry). `rank`/`movement`/`movement_delta` are added by the endpoint. Many
+ * optional scanner-written fields ride the index signature.
  */
 export type Agent = {
   id: string;
@@ -230,13 +230,6 @@ export type OnchainResult = {
   error: string | null;
 };
 export type OnchainCheckResponse = { ok: true; data: OnchainResult };
-
-// ── Chat (3.5c) — blocking (non-streaming) ─────────────────────────────────
-
-export type ChatRole = "user" | "assistant";
-export type ChatMessage = { role: ChatRole; content: string };
-export type ChatRequest = { messages: ChatMessage[] };
-export type ChatResponse = { ok: true; reply: string };
 
 // ── B20 Trust Score scanner (7.2b) ─────────────────────────────────────────
 // Mirrors acp-sec-b20 `ScanResult.to_dict()`, per
