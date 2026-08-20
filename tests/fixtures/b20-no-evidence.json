@@ -1,0 +1,92 @@
+{
+    "token": "0xb200000000000000000000f6418207e8554c3201",
+    "chain_id": 8453,
+    "variant": "ASSET",
+    "name": null,
+    "symbol": null,
+    "decimals": 18,
+    "currency_code": null,
+    "trust_score": 20,
+    "raw_score": 40,
+    "grade": "F",
+    "rated": false,
+    "multiplier": 0.5,
+    "unrated_dimensions": [
+        "issuer_authority",
+        "transfer_policy",
+        "origin_transparency"
+    ],
+    "read_diagnostics": {
+        "issuer_authority": "role holders not determinable from logs for this token (no RoleGranted/RoleRevoked events observed; an empty replay is not proof of revocation)",
+        "transfer_policy": "role holders not determinable from logs for this token (no RoleGranted/RoleRevoked events observed; an empty replay is not proof of revocation)"
+    },
+    "is_critical": false,
+    "critical_reasons": [],
+    "dimensions": {
+        "issuer_authority": {
+            "score": 100.0,
+            "weight": 0.3,
+            "findings": []
+        },
+        "supply_integrity": {
+            "score": 100.0,
+            "weight": 0.25,
+            "findings": []
+        },
+        "transfer_policy": {
+            "score": 100.0,
+            "weight": 0.2,
+            "findings": []
+        },
+        "variant_config": {
+            "score": 100.0,
+            "weight": 0.15,
+            "findings": []
+        },
+        "origin_transparency": {
+            "score": 90.0,
+            "weight": 0.1,
+            "findings": [
+                {
+                    "severity": "Low",
+                    "detail": "no on-chain announcement events",
+                    "evidence": null
+                }
+            ]
+        }
+    },
+    "issuer_powers": {
+        "can_freeze": false,
+        "can_seize": null,
+        "can_burn_blocked": null,
+        "can_pause": null,
+        "can_mint_unbounded": false,
+        "supply_cap": "1000000000000000000000000000",
+        "admin_addresses": [],
+        "admin_is_multisig": null,
+        "mint_role_holders": [],
+        "pause_role_holders": []
+    },
+    "deployed_via_factory": "0xB20f000000000000000000000000000000000000",
+    "scanner_version": "0.1.0",
+    "scanned_at": "2026-08-20T08:19:04Z",
+    "evidence": {
+        "as_of_block": 50212294,
+        "roles": {},
+        "announcements": [],
+        "state": {
+            "supply_cap": {
+                "kind": "state",
+                "block_number": 50212294,
+                "raw_value": "0x0000000000000000000000000000000000000000033b2e3c9fd0803ce8000000",
+                "confirmed": null
+            },
+            "decimals": {
+                "kind": "state",
+                "block_number": 50212294,
+                "raw_value": "0x0000000000000000000000000000000000000000000000000000000000000012",
+                "confirmed": null
+            }
+        }
+    }
+}

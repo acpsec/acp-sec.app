@@ -77,7 +77,7 @@ export function DimensionBreakdown({ result }: { result: B20ScanResult }) {
                     )}
                   </div>
                   <span className="tabular-nums text-caption text-fg-muted">
-                    {dim.score}/100
+                    {isUnrated ? "—" : `${dim.score}/100`}
                   </span>
                 </div>
 
@@ -94,6 +94,12 @@ export function DimensionBreakdown({ result }: { result: B20ScanResult }) {
                     style={{ width: `${Math.max(0, Math.min(100, dim.score))}%` }}
                   />
                 </div>
+
+                {isUnrated && result.read_diagnostics?.[key] && (
+                  <p className="mt-1 text-micro text-fg-subtle italic">
+                    {result.read_diagnostics[key]}
+                  </p>
+                )}
 
                 {dim.findings.length > 0 && (
                   <ul className="mt-3 space-y-1.5">

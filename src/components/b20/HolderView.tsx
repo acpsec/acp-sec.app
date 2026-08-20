@@ -1,6 +1,7 @@
 import type { B20ScanResult } from "@/lib/api/types";
 
 import { CriticalBadge, GradeBadge, PowerBadge } from "./badges";
+import { RoleHolderChips } from "./RoleHolderChips";
 
 /** Layer 1 — the holder/buyer view, shown by default. */
 export function HolderView({ result }: { result: B20ScanResult }) {
@@ -53,6 +54,23 @@ export function HolderView({ result }: { result: B20ScanResult }) {
           <PowerBadge power="pause" value={p.can_pause} />
           <PowerBadge power="mint" value={p.can_mint_unbounded} />
         </div>
+
+        <RoleHolderChips evidence={result.evidence ?? null} chainId={result.chain_id} />
+
+        {result.evidence?.state && Object.keys(result.evidence.state).length > 0 && (
+          <div className="mt-3 space-y-1">
+            {Object.entries(result.evidence.state).map(([k, ev]) =>
+              ev.block_number != null ? (
+                <details key={k} className="text-micro text-fg-subtle">
+                  <summary className="cursor-pointer list-none hover:text-fg-muted">
+                    {k} · block {ev.block_number}
+                  </summary>
+                  <span className="ml-2 font-mono text-fg-muted">{ev.raw_value}</span>
+                </details>
+              ) : null,
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
