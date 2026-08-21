@@ -5,6 +5,7 @@ function statusClass(status: string): string {
   const s = status.toLowerCase();
   if (s === "pass") return "bg-success/15 text-success";
   if (s === "warn") return "bg-warning/15 text-warning";
+  if (s === "unrated") return "bg-fg-subtle/10 text-fg-subtle";
   return "bg-danger/15 text-danger";
 }
 
@@ -59,6 +60,14 @@ export function ChecksList({ controls }: { controls: ScanControl[] }) {
                   >
                     {c.status.toUpperCase()}
                   </span>
+                  {c.inferred ? (
+                    <span
+                      className="rounded bg-fg-subtle/10 px-1.5 py-0.5 text-center text-micro font-medium text-fg-subtle"
+                      title="no direct evidence found — estimated from limited signals"
+                    >
+                      inferred
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-caption font-semibold">{c.name}</span>

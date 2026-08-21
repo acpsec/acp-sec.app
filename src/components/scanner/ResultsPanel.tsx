@@ -53,8 +53,25 @@ export function ResultsPanel({
   const secHeaderCount =
     typeof d.sec_header_count === "number" ? d.sec_header_count : 0;
 
+  const inferredCount = d.controls.filter((c) => c.inferred).length;
+  const verifiedCount = d.controls.length - inferredCount;
+  const inferenceDominant =
+    d.rated === false ||
+    (d.controls.length > 0 && inferredCount / d.controls.length > 0.5);
+
   return (
     <div className="flex flex-col gap-5">
+      {/* Inference-dominant banner */}
+      {inferenceDominant ? (
+        <div
+          data-testid="inference-banner"
+          className="rounded-lg border border-warning/30 bg-warning/8 px-4 py-3 text-caption text-warning"
+        >
+          This scan is mostly inferred — provide the agent&apos;s API/docs URL
+          for a verified result.
+        </div>
+      ) : null}
+
       {/* Score hero */}
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
@@ -141,6 +158,15 @@ export function ResultsPanel({
       {/* Dimension bars + detailed checks */}
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="mb-1 text-body font-bold">Detailed Findings</div>
+        {d.controls.length > 0 ? (
+          <p
+            data-testid="coverage-summary"
+            className="mb-1 text-caption text-fg-subtle"
+          >
+            {verifiedCount} of {d.controls.length} controls verified,{" "}
+            {inferredCount} inferred
+          </p>
+        ) : null}
         <p className="mb-4 text-caption text-fg-subtle">
           Scores are <em>inferred</em> from public content &amp; HTTP headers.
         </p>
