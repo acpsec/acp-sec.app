@@ -60,14 +60,6 @@ export function ChecksList({ controls }: { controls: ScanControl[] }) {
                   >
                     {c.status.toUpperCase()}
                   </span>
-                  {c.inferred ? (
-                    <span
-                      className="rounded bg-fg-subtle/10 px-1.5 py-0.5 text-center text-micro font-medium text-fg-subtle"
-                      title="no direct evidence found — estimated from limited signals"
-                    >
-                      inferred
-                    </span>
-                  ) : null}
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-caption font-semibold">{c.name}</span>

@@ -53,22 +53,23 @@ export function ResultsPanel({
   const secHeaderCount =
     typeof d.sec_header_count === "number" ? d.sec_header_count : 0;
 
-  const inferredCount = d.controls.filter((c) => c.inferred).length;
-  const verifiedCount = d.controls.length - inferredCount;
-  const inferenceDominant =
-    d.rated === false ||
-    (d.controls.length > 0 && inferredCount / d.controls.length > 0.5);
+  const evidenceFoundCount =
+    typeof d.evidence_found_count === "number" ? d.evidence_found_count : null;
+  const lowEvidence = d.low_evidence === true;
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Inference-dominant banner */}
-      {inferenceDominant ? (
+      {/* Low-evidence banner */}
+      {lowEvidence ? (
         <div
-          data-testid="inference-banner"
+          data-testid="low-evidence-banner"
           className="rounded-lg border border-warning/30 bg-warning/8 px-4 py-3 text-caption text-warning"
         >
-          This scan is mostly inferred — provide the agent&apos;s API/docs URL
-          for a verified result.
+          This scan found limited evidence — the URL may be a marketing or
+          landing page rather than technical documentation. A CRITICAL score
+          here often means &ldquo;not enough to assess&rdquo;, not
+          &ldquo;unsafe&rdquo;. Try the agent&apos;s API or documentation URL
+          for a more accurate result.
         </div>
       ) : null}
 
@@ -158,13 +159,14 @@ export function ResultsPanel({
       {/* Dimension bars + detailed checks */}
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="mb-1 text-body font-bold">Detailed Findings</div>
-        {d.controls.length > 0 ? (
+        {d.controls.length > 0 && evidenceFoundCount !== null ? (
           <p
             data-testid="coverage-summary"
             className="mb-1 text-caption text-fg-subtle"
           >
-            {verifiedCount} of {d.controls.length} controls verified,{" "}
-            {inferredCount} inferred
+            {evidenceFoundCount} of {d.controls.length} controls found direct
+            evidence,{" "}
+            {d.controls.length - evidenceFoundCount} estimated or not found
           </p>
         ) : null}
         <p className="mb-4 text-caption text-fg-subtle">

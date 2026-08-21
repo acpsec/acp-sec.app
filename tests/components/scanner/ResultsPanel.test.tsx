@@ -6,48 +6,31 @@ import type { ReportData, ScanControl } from "@/lib/api/types";
 
 vi.mock("react-chartjs-2", () => ({ Radar: () => <div data-testid="radar" /> }));
 
-// Fully-inferred control factory — mimics real CRITICAL scan output.
-function inferredCtrl(ctrl: string, dimension: string, dimension_name: string): ScanControl {
-  return {
-    ctrl,
-    name: ctrl,
-    dimension,
-    dimension_name,
-    max: 3,
-    score: 0,
-    severity: "HIGH",
-    status: "warn",
-    inferred: true,
-  };
-}
+// @grok — CRITICAL, score ~25, low_evidence:true (2 out of 38 found direct evidence)
+const GROK_CONTROLS: ScanControl[] = Array.from({ length: 38 }, (_, i) => ({
+  ctrl: `CTRL-${String(i + 1).padStart(2, "0")}`,
+  name: `Control ${i + 1}`,
+  dimension: "AUTH",
+  dimension_name: "Authentication",
+  max: 3,
+  score: i < 2 ? 3 : 0,   // 2 pass, 36 fail
+  severity: "HIGH",
+  status: i < 2 ? "pass" : "fail",
+  inferred: true,
+}));
 
-function verifiedCtrl(ctrl: string, dimension: string, dimension_name: string): ScanControl {
-  return {
-    ctrl,
-    name: ctrl,
-    dimension,
-    dimension_name,
-    max: 3,
-    score: 2,
-    severity: "HIGH",
-    status: "pass",
-    inferred: false,
-  };
-}
-
-// @grok — CRITICAL, score ~25, all 38 controls inferred:true
-const GROK_CONTROLS: ScanControl[] = [
-  ...["AUTH-01","AUTH-02","AUTH-03"].map(c => inferredCtrl(c, "AUTH", "Authentication")),
-  ...["CTX-01","CTX-02","CTX-03","CTX-04","CTX-05","CTX-06"].map(c => inferredCtrl(c, "CTX", "Context")),
-  ...["GOV-01","GOV-02","GOV-03","GOV-04","GOV-05","GOV-06"].map(c => inferredCtrl(c, "GOV", "Governance")),
-  ...["INJ-01","INJ-02","INJ-03","INJ-04","INJ-05","INJ-06"].map(c => inferredCtrl(c, "INJ", "Injection")),
-  ...["OUT-01","OUT-02","OUT-03","OUT-04"].map(c => inferredCtrl(c, "OUT", "Output")),
-  ...["PRIV-01","PRIV-02","PRIV-03","PRIV-04","PRIV-05"].map(c => inferredCtrl(c, "PRIV", "Privacy")),
-  ...["PUB-01","PUB-02","PUB-03","PUB-04","PUB-05","PUB-06","PUB-07","PUB-08"].map(c => inferredCtrl(c, "PUB", "Public")),
-];
-
-// @ethy — CRITICAL, score ~24, all 38 controls inferred:true (slightly worse)
-const ETHY_CONTROLS: ScanControl[] = GROK_CONTROLS.map(c => ({ ...c }));
+// @ethy — CRITICAL, score ~24, low_evidence:true (1 out of 38 found direct evidence)
+const ETHY_CONTROLS: ScanControl[] = Array.from({ length: 38 }, (_, i) => ({
+  ctrl: `CTRL-${String(i + 1).padStart(2, "0")}`,
+  name: `Control ${i + 1}`,
+  dimension: "AUTH",
+  dimension_name: "Authentication",
+  max: 3,
+  score: i < 1 ? 3 : 0,
+  severity: "HIGH",
+  status: i < 1 ? "pass" : "fail",
+  inferred: true,
+}));
 
 const GROK_DATA: ReportData = {
   agent_name: "grok",
@@ -61,6 +44,9 @@ const GROK_DATA: ReportData = {
   controls: GROK_CONTROLS,
   x_username: "grok",
   x_handle_verified: true,
+  evidence_found_count: 2,
+  evidence_coverage: 0.053,
+  low_evidence: true,
 };
 
 const ETHY_DATA: ReportData = {
@@ -75,6 +61,9 @@ const ETHY_DATA: ReportData = {
   controls: ETHY_CONTROLS,
   x_username: "ethy",
   x_handle_verified: true,
+  evidence_found_count: 1,
+  evidence_coverage: 0.026,
+  low_evidence: true,
 };
 
 const DATA = (over: Partial<ReportData> = {}): ReportData => ({
@@ -100,6 +89,9 @@ const DATA = (over: Partial<ReportData> = {}): ReportData => ({
   ],
   x_username: "aixbt_agent",
   x_handle_verified: true,
+  evidence_found_count: 1,
+  evidence_coverage: 1.0,
+  low_evidence: false,
   ...over,
 });
 
@@ -119,15 +111,12 @@ function renderPanel(over: Partial<ReportData> = {}) {
 }
 
 function renderWith(data: ReportData) {
-  const onScanAnother = vi.fn();
-  const onOpenDashboard = vi.fn();
-  const onExport = vi.fn();
   render(
     <ResultsPanel
       result={data}
-      onScanAnother={onScanAnother}
-      onOpenDashboard={onOpenDashboard}
-      onExport={onExport}
+      onScanAnother={vi.fn()}
+      onOpenDashboard={vi.fn()}
+      onExport={vi.fn()}
     />,
   );
 }
@@ -135,7 +124,6 @@ function renderWith(data: ReportData) {
 describe("ResultsPanel", () => {
   it("renders the score hero, band and verified handle", () => {
     renderPanel();
-    // "82" appears in both the ring and the Final Score metric.
     expect(screen.getAllByText("82").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("SECURE")).toBeInTheDocument();
     expect(screen.getByText("@aixbt_agent")).toBeInTheDocument();
@@ -145,7 +133,7 @@ describe("ResultsPanel", () => {
   it("renders the metrics strip", () => {
     renderPanel();
     expect(screen.getByText("Final Score")).toBeInTheDocument();
-    expect(screen.getByText("4/9")).toBeInTheDocument(); // security headers
+    expect(screen.getByText("4/9")).toBeInTheDocument();
     expect(screen.getByText("Checks Run")).toBeInTheDocument();
   });
 
@@ -186,79 +174,63 @@ describe("ResultsPanel", () => {
 
   // --- Coverage summary (RED) ---------------------------------------------
 
-  it("shows a coverage summary with verified and inferred counts — @grok fixture", () => {
+  it("shows coverage summary reading evidence_found_count from data — @grok", () => {
     renderWith(GROK_DATA);
-    // All 38 controls are inferred:true → 0 verified, 38 inferred
-    expect(screen.getByTestId("coverage-summary")).toBeInTheDocument();
-    expect(screen.getByTestId("coverage-summary")).toHaveTextContent("0");
-    expect(screen.getByTestId("coverage-summary")).toHaveTextContent("38");
-  });
-
-  it("shows a coverage summary with verified and inferred counts — @ethy fixture", () => {
-    renderWith(ETHY_DATA);
-    expect(screen.getByTestId("coverage-summary")).toBeInTheDocument();
-    expect(screen.getByTestId("coverage-summary")).toHaveTextContent("0");
-    expect(screen.getByTestId("coverage-summary")).toHaveTextContent("38");
-  });
-
-  it("coverage summary correctly splits verified vs inferred controls", () => {
-    // 1 verified (inferred:false), 2 inferred:true
-    const controls: ScanControl[] = [
-      verifiedCtrl("AUTH-01", "AUTH", "Authentication"),
-      inferredCtrl("GOV-01", "GOV", "Governance"),
-      inferredCtrl("INJ-01", "INJ", "Injection"),
-    ];
-    renderWith(DATA({ controls }));
+    // 2 of 38 found direct evidence
     const summary = screen.getByTestId("coverage-summary");
-    expect(summary).toHaveTextContent("1");  // verified
-    expect(summary).toHaveTextContent("2");  // inferred
+    expect(summary).toBeInTheDocument();
+    expect(summary).toHaveTextContent("2");
+    expect(summary).toHaveTextContent("38");
   });
 
-  // --- Inference-dominant banner (RED) ------------------------------------
-
-  it("shows inference-dominant banner when scan is rated:false (no-website)", () => {
-    renderWith(DATA({ rated: false, no_website: true, controls: [] }));
-    expect(screen.getByTestId("inference-banner")).toBeInTheDocument();
-    expect(screen.getByTestId("inference-banner")).toHaveTextContent(
-      "This scan is mostly inferred",
-    );
-  });
-
-  it("shows inference-dominant banner for @grok (all 38 controls inferred)", () => {
-    renderWith(GROK_DATA);
-    expect(screen.getByTestId("inference-banner")).toBeInTheDocument();
-  });
-
-  it("shows inference-dominant banner for @ethy (all 38 controls inferred)", () => {
+  it("shows coverage summary reading evidence_found_count from data — @ethy", () => {
     renderWith(ETHY_DATA);
-    expect(screen.getByTestId("inference-banner")).toBeInTheDocument();
+    // 1 of 38 found direct evidence
+    const summary = screen.getByTestId("coverage-summary");
+    expect(summary).toBeInTheDocument();
+    expect(summary).toHaveTextContent("1");
+    expect(summary).toHaveTextContent("38");
   });
 
-  it("does not show banner when scan is fully verified (no inferred controls)", () => {
-    // All controls have inferred:false → banner should not appear
-    const controls: ScanControl[] = [
-      verifiedCtrl("AUTH-01", "AUTH", "Authentication"),
-      verifiedCtrl("GOV-01", "GOV", "Governance"),
-    ];
-    renderWith(DATA({ controls }));
-    expect(screen.queryByTestId("inference-banner")).not.toBeInTheDocument();
-  });
-
-  it("does not show banner when fewer than half are inferred", () => {
-    // 2 verified, 1 inferred → 33% inferred → no banner
-    const controls: ScanControl[] = [
-      verifiedCtrl("AUTH-01", "AUTH", "Authentication"),
-      verifiedCtrl("GOV-01", "GOV", "Governance"),
-      inferredCtrl("INJ-01", "INJ", "Injection"),
-    ];
-    renderWith(DATA({ controls }));
-    expect(screen.queryByTestId("inference-banner")).not.toBeInTheDocument();
-  });
-
-  it("banner links to providing a URL for a verified result", () => {
+  it("coverage summary shows 'found direct evidence' language", () => {
     renderWith(GROK_DATA);
-    const banner = screen.getByTestId("inference-banner");
-    expect(banner).toHaveTextContent("provide");
+    const summary = screen.getByTestId("coverage-summary");
+    expect(summary).toHaveTextContent(/found direct evidence/i);
+  });
+
+  // --- Low-evidence banner (RED) ------------------------------------------
+
+  it("shows low-evidence banner when d.low_evidence is true — @grok", () => {
+    renderWith(GROK_DATA);
+    const banner = screen.getByTestId("low-evidence-banner");
+    expect(banner).toBeInTheDocument();
+  });
+
+  it("shows low-evidence banner when d.low_evidence is true — @ethy", () => {
+    renderWith(ETHY_DATA);
+    expect(screen.getByTestId("low-evidence-banner")).toBeInTheDocument();
+  });
+
+  it("banner explains CRITICAL here often means 'not enough to assess'", () => {
+    renderWith(GROK_DATA);
+    const banner = screen.getByTestId("low-evidence-banner");
+    expect(banner).toHaveTextContent(/not enough to assess/i);
+  });
+
+  it("banner suggests trying an API or documentation URL", () => {
+    renderWith(GROK_DATA);
+    const banner = screen.getByTestId("low-evidence-banner");
+    expect(banner).toHaveTextContent(/API.*documentation|documentation.*URL/i);
+  });
+
+  it("does not show low-evidence banner when d.low_evidence is false", () => {
+    renderPanel({ low_evidence: false });
+    expect(screen.queryByTestId("low-evidence-banner")).not.toBeInTheDocument();
+  });
+
+  it("does not show low-evidence banner when low_evidence is absent", () => {
+    renderPanel();  // DATA default has low_evidence: false
+    expect(screen.queryByTestId("low-evidence-banner")).not.toBeInTheDocument();
   });
 });
 
