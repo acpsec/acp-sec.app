@@ -99,3 +99,129 @@ describe("ResultsPanel", () => {
     expect(onExport).toHaveBeenCalledOnce();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Fetch-failed render path
+// When the backend cannot fetch the agent's website it returns rated:false /
+// fetch_status:"failed" / final_score:null. The UI must NOT show COMPROMISED
+// band or a 0 score — it must show a neutral "UNRATED" treatment.
+// ---------------------------------------------------------------------------
+
+const UNRATED_CONTROLS = Array.from({ length: 5 }, (_, i) => ({
+  ctrl: `CTRL-${String(i + 1).padStart(2, "0")}`,
+  name: `Control ${i + 1}`,
+  dimension: "AUTH",
+  dimension_name: "Authentication",
+  max: 3,
+  score: 0,
+  severity: "HIGH",
+  status: "unrated",
+}));
+
+const FAILED = (): ReportData => ({
+  agent_name: "broken-agent",
+  band: "COMPROMISED",
+  verdict:
+    "Fetch failed — Connection refused: timed out. Technical controls are unrated.",
+  final_score: null,
+  rated: false,
+  fetch_status: "failed",
+  critical_fails: 0,
+  sec_header_count: 0,
+  security_headers: {},
+  controls: UNRATED_CONTROLS,
+});
+
+function renderFailed(data: ReportData = FAILED()) {
+  render(
+    <ResultsPanel
+      result={data}
+      onScanAnother={vi.fn()}
+      onOpenDashboard={vi.fn()}
+      onExport={vi.fn()}
+    />,
+  );
+}
+
+describe("fetch-failed render path", () => {
+  it("renders fetch-failed-notice element instead of score ring", () => {
+    renderFailed();
+    expect(screen.getByTestId("fetch-failed-notice")).toBeInTheDocument();
+  });
+
+  it("does not render score ring — no '/ 100' text", () => {
+    renderFailed();
+    expect(screen.queryByText("/ 100")).not.toBeInTheDocument();
+  });
+
+  it("does not show COMPROMISED band even when backend sends it", () => {
+    renderFailed();
+    expect(screen.queryByText("COMPROMISED")).not.toBeInTheDocument();
+  });
+
+  it("shows UNRATED band badge instead of the real band", () => {
+    renderFailed();
+    // "UNRATED" appears in the band badge (and in control status chips for each
+    // unrated control). getAllByText confirms at least one UNRATED is present.
+    expect(screen.getAllByText("UNRATED").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows the fetch diagnostic text from verdict", () => {
+    renderFailed();
+    expect(
+      screen.getByText(/Connection refused: timed out/),
+    ).toBeInTheDocument();
+  });
+
+  it("shows '—' for Final Score in the metrics strip, not 0", () => {
+    renderFailed();
+    // parentElement is the outer metric tile div (value + label); closest("div")
+    // would stop at the inner label div, which only contains "Final Score".
+    const tile = screen.getByText("Final Score").parentElement;
+    expect(tile).toHaveTextContent("—");
+    expect(tile).not.toHaveTextContent("0");
+  });
+
+  it("fires on rated:false signal alone — even with a numeric score", () => {
+    renderFailed(DATA({ rated: false }));
+    expect(screen.getByTestId("fetch-failed-notice")).toBeInTheDocument();
+  });
+
+  it("fires on fetch_status:failed signal alone — even with a numeric score", () => {
+    renderFailed(DATA({ fetch_status: "failed" }));
+    expect(screen.getByTestId("fetch-failed-notice")).toBeInTheDocument();
+  });
+
+  it("fires on null final_score signal alone", () => {
+    renderFailed({ ...DATA(), final_score: null });
+    expect(screen.getByTestId("fetch-failed-notice")).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Normal response guard — fetch-failed path must NOT fire on old backend shape
+// ---------------------------------------------------------------------------
+
+describe("normal response guard", () => {
+  it("renders score ring when final_score is a number", () => {
+    renderPanel();
+    expect(screen.queryByTestId("fetch-failed-notice")).not.toBeInTheDocument();
+    expect(screen.getByText("/ 100")).toBeInTheDocument();
+  });
+
+  it("renders real band when response is normal", () => {
+    renderPanel();
+    expect(screen.getByText("SECURE")).toBeInTheDocument();
+    expect(screen.queryByText("UNRATED")).not.toBeInTheDocument();
+  });
+
+  it("does not fire when rated is undefined (old backend shape)", () => {
+    renderPanel({ rated: undefined });
+    expect(screen.queryByTestId("fetch-failed-notice")).not.toBeInTheDocument();
+  });
+
+  it("does not fire when rated is true", () => {
+    renderPanel({ rated: true });
+    expect(screen.queryByTestId("fetch-failed-notice")).not.toBeInTheDocument();
+  });
+});
