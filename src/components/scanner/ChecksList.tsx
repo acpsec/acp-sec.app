@@ -5,6 +5,7 @@ function statusClass(status: string): string {
   const s = status.toLowerCase();
   if (s === "pass") return "bg-success/15 text-success";
   if (s === "warn") return "bg-warning/15 text-warning";
+  if (s === "unrated") return "bg-fg-subtle/10 text-fg-subtle";
   return "bg-danger/15 text-danger";
 }
 

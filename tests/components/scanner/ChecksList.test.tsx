@@ -30,6 +30,18 @@ const CONTROLS: ScanControl[] = [
   },
 ];
 
+const UNRATED_CONTROL: ScanControl = {
+  ctrl: "PUB-01",
+  name: "Public disclosure",
+  dimension: "PUB",
+  dimension_name: "Public",
+  max: 2,
+  score: 0,
+  severity: "MEDIUM",
+  status: "unrated",
+  finding: "no website provided — technical security signals unavailable",
+};
+
 describe("ChecksList", () => {
   it("renders a group per dimension and each check", () => {
     render(<ChecksList controls={CONTROLS} />);
@@ -54,5 +66,16 @@ describe("ChecksList", () => {
   it("renders nothing for empty controls", () => {
     const { container } = render(<ChecksList controls={[]} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("does not render an 'inferred' badge — the field is noise, status is the signal", () => {
+    const ctrlWithInferred: ScanControl = { ...CONTROLS[0], inferred: true };
+    render(<ChecksList controls={[ctrlWithInferred]} />);
+    expect(screen.queryByText("inferred")).not.toBeInTheDocument();
+  });
+
+  it("shows UNRATED status badge for a control with status='unrated'", () => {
+    render(<ChecksList controls={[UNRATED_CONTROL]} />);
+    expect(screen.getByText("UNRATED")).toBeInTheDocument();
   });
 });

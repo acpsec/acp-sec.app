@@ -70,6 +70,9 @@ export type ScoreData = {
   rated?: boolean;
   /** "failed" when the website fetch failed; absent on normal scans. */
   fetch_status?: string | null;
+  evidence_coverage?: number;
+  evidence_found_count?: number;
+  low_evidence?: boolean;
   [key: string]: unknown;
 };
 

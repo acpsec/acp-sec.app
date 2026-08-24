@@ -2,9 +2,69 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ResultsPanel } from "@/components/scanner/ResultsPanel";
-import type { ReportData } from "@/lib/api/types";
+import type { ReportData, ScanControl } from "@/lib/api/types";
 
 vi.mock("react-chartjs-2", () => ({ Radar: () => <div data-testid="radar" /> }));
+
+// @grok — CRITICAL, score ~25, low_evidence:true (2 out of 38 found direct evidence)
+const GROK_CONTROLS: ScanControl[] = Array.from({ length: 38 }, (_, i) => ({
+  ctrl: `CTRL-${String(i + 1).padStart(2, "0")}`,
+  name: `Control ${i + 1}`,
+  dimension: "AUTH",
+  dimension_name: "Authentication",
+  max: 3,
+  score: i < 2 ? 3 : 0,   // 2 pass, 36 fail
+  severity: "HIGH",
+  status: i < 2 ? "pass" : "fail",
+  inferred: true,
+}));
+
+// @ethy — CRITICAL, score ~24, low_evidence:true (1 out of 38 found direct evidence)
+const ETHY_CONTROLS: ScanControl[] = Array.from({ length: 38 }, (_, i) => ({
+  ctrl: `CTRL-${String(i + 1).padStart(2, "0")}`,
+  name: `Control ${i + 1}`,
+  dimension: "AUTH",
+  dimension_name: "Authentication",
+  max: 3,
+  score: i < 1 ? 3 : 0,
+  severity: "HIGH",
+  status: i < 1 ? "pass" : "fail",
+  inferred: true,
+}));
+
+const GROK_DATA: ReportData = {
+  agent_name: "grok",
+  band: "CRITICAL",
+  verdict: "Multiple high-severity issues",
+  final_score: 29.1,
+  score_pct: 25,
+  critical_fails: 4,
+  sec_header_count: 0,
+  security_headers: {},
+  controls: GROK_CONTROLS,
+  x_username: "grok",
+  x_handle_verified: true,
+  evidence_found_count: 2,
+  evidence_coverage: 0.053,
+  low_evidence: true,
+};
+
+const ETHY_DATA: ReportData = {
+  agent_name: "ethy",
+  band: "CRITICAL",
+  verdict: "Multiple high-severity issues",
+  final_score: 27.9,
+  score_pct: 24,
+  critical_fails: 5,
+  sec_header_count: 0,
+  security_headers: {},
+  controls: ETHY_CONTROLS,
+  x_username: "ethy",
+  x_handle_verified: true,
+  evidence_found_count: 1,
+  evidence_coverage: 0.026,
+  low_evidence: true,
+};
 
 const DATA = (over: Partial<ReportData> = {}): ReportData => ({
   agent_name: "aixbt",
@@ -29,6 +89,9 @@ const DATA = (over: Partial<ReportData> = {}): ReportData => ({
   ],
   x_username: "aixbt_agent",
   x_handle_verified: true,
+  evidence_found_count: 1,
+  evidence_coverage: 1.0,
+  low_evidence: false,
   ...over,
 });
 
@@ -47,10 +110,20 @@ function renderPanel(over: Partial<ReportData> = {}) {
   return { onScanAnother, onOpenDashboard, onExport };
 }
 
+function renderWith(data: ReportData) {
+  render(
+    <ResultsPanel
+      result={data}
+      onScanAnother={vi.fn()}
+      onOpenDashboard={vi.fn()}
+      onExport={vi.fn()}
+    />,
+  );
+}
+
 describe("ResultsPanel", () => {
   it("renders the score hero, band and verified handle", () => {
     renderPanel();
-    // "82" appears in both the ring and the Final Score metric.
     expect(screen.getAllByText("82").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("SECURE")).toBeInTheDocument();
     expect(screen.getByText("@aixbt_agent")).toBeInTheDocument();
@@ -60,7 +133,7 @@ describe("ResultsPanel", () => {
   it("renders the metrics strip", () => {
     renderPanel();
     expect(screen.getByText("Final Score")).toBeInTheDocument();
-    expect(screen.getByText("4/9")).toBeInTheDocument(); // security headers
+    expect(screen.getByText("4/9")).toBeInTheDocument();
     expect(screen.getByText("Checks Run")).toBeInTheDocument();
   });
 
@@ -97,6 +170,67 @@ describe("ResultsPanel", () => {
     expect(onScanAnother).toHaveBeenCalledOnce();
     expect(onOpenDashboard).toHaveBeenCalledOnce();
     expect(onExport).toHaveBeenCalledOnce();
+  });
+
+  // --- Coverage summary (RED) ---------------------------------------------
+
+  it("shows coverage summary reading evidence_found_count from data — @grok", () => {
+    renderWith(GROK_DATA);
+    // 2 of 38 found direct evidence
+    const summary = screen.getByTestId("coverage-summary");
+    expect(summary).toBeInTheDocument();
+    expect(summary).toHaveTextContent("2");
+    expect(summary).toHaveTextContent("38");
+  });
+
+  it("shows coverage summary reading evidence_found_count from data — @ethy", () => {
+    renderWith(ETHY_DATA);
+    // 1 of 38 found direct evidence
+    const summary = screen.getByTestId("coverage-summary");
+    expect(summary).toBeInTheDocument();
+    expect(summary).toHaveTextContent("1");
+    expect(summary).toHaveTextContent("38");
+  });
+
+  it("coverage summary shows 'found direct evidence' language", () => {
+    renderWith(GROK_DATA);
+    const summary = screen.getByTestId("coverage-summary");
+    expect(summary).toHaveTextContent(/found direct evidence/i);
+  });
+
+  // --- Low-evidence banner (RED) ------------------------------------------
+
+  it("shows low-evidence banner when d.low_evidence is true — @grok", () => {
+    renderWith(GROK_DATA);
+    const banner = screen.getByTestId("low-evidence-banner");
+    expect(banner).toBeInTheDocument();
+  });
+
+  it("shows low-evidence banner when d.low_evidence is true — @ethy", () => {
+    renderWith(ETHY_DATA);
+    expect(screen.getByTestId("low-evidence-banner")).toBeInTheDocument();
+  });
+
+  it("banner explains CRITICAL here often means 'not enough to assess'", () => {
+    renderWith(GROK_DATA);
+    const banner = screen.getByTestId("low-evidence-banner");
+    expect(banner).toHaveTextContent(/not enough to assess/i);
+  });
+
+  it("banner suggests trying an API or documentation URL", () => {
+    renderWith(GROK_DATA);
+    const banner = screen.getByTestId("low-evidence-banner");
+    expect(banner).toHaveTextContent(/API.*documentation|documentation.*URL/i);
+  });
+
+  it("does not show low-evidence banner when d.low_evidence is false", () => {
+    renderPanel({ low_evidence: false });
+    expect(screen.queryByTestId("low-evidence-banner")).not.toBeInTheDocument();
+  });
+
+  it("does not show low-evidence banner when low_evidence is absent", () => {
+    renderPanel();  // DATA default has low_evidence: false
+    expect(screen.queryByTestId("low-evidence-banner")).not.toBeInTheDocument();
   });
 });
 

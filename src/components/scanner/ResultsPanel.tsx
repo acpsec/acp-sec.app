@@ -53,8 +53,26 @@ export function ResultsPanel({
   const secHeaderCount =
     typeof d.sec_header_count === "number" ? d.sec_header_count : 0;
 
+  const evidenceFoundCount =
+    typeof d.evidence_found_count === "number" ? d.evidence_found_count : null;
+  const lowEvidence = d.low_evidence === true;
+
   return (
     <div className="flex flex-col gap-5">
+      {/* Low-evidence banner */}
+      {lowEvidence ? (
+        <div
+          data-testid="low-evidence-banner"
+          className="rounded-lg border border-warning/30 bg-warning/8 px-4 py-3 text-caption text-warning"
+        >
+          This scan found limited evidence — the URL may be a marketing or
+          landing page rather than technical documentation. A CRITICAL score
+          here often means &ldquo;not enough to assess&rdquo;, not
+          &ldquo;unsafe&rdquo;. Try the agent&apos;s API or documentation URL
+          for a more accurate result.
+        </div>
+      ) : null}
+
       {/* Score hero */}
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
@@ -141,6 +159,16 @@ export function ResultsPanel({
       {/* Dimension bars + detailed checks */}
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="mb-1 text-body font-bold">Detailed Findings</div>
+        {d.controls.length > 0 && evidenceFoundCount !== null ? (
+          <p
+            data-testid="coverage-summary"
+            className="mb-1 text-caption text-fg-subtle"
+          >
+            {evidenceFoundCount} of {d.controls.length} controls found direct
+            evidence,{" "}
+            {d.controls.length - evidenceFoundCount} estimated or not found
+          </p>
+        ) : null}
         <p className="mb-4 text-caption text-fg-subtle">
           Scores are <em>inferred</em> from public content &amp; HTTP headers.
         </p>
