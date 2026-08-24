@@ -58,13 +58,18 @@ export type ScoreData = {
   agent_version?: string;
   band: string;
   verdict: string;
-  final_score: number;
-  score_pct?: number;
+  /** null when the scan could not fetch the website (fetch-failed path). */
+  final_score: number | null;
+  score_pct?: number | null;
   critical_fails?: number;
   controls: ScanControl[];
   source?: string;
   timestamp?: string;
   x_username?: string;
+  /** false when the scan result is not rated (fetch-failed / no-website). */
+  rated?: boolean;
+  /** "failed" when the website fetch failed; absent on normal scans. */
+  fetch_status?: string | null;
   [key: string]: unknown;
 };
 

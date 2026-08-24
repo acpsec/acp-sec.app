@@ -22,7 +22,15 @@ const SEC_HEADERS: [key: string, label: string][] = [
 ];
 
 function pctOf(d: ReportData): number {
-  return d.score_pct || d.final_score || 0;
+  return d.score_pct ?? d.final_score ?? 0;
+}
+
+function isFetchFailed(d: ReportData): boolean {
+  return (
+    d.rated === false ||
+    d.fetch_status === "failed" ||
+    d.final_score == null
+  );
 }
 
 interface ResultsPanelProps {
@@ -38,6 +46,7 @@ export function ResultsPanel({
   onOpenDashboard,
   onExport,
 }: ResultsPanelProps) {
+  const fetchFailed = isFetchFailed(d);
   const pct = pctOf(d);
   const bandColor = tierToColorClass(scoreToTier(pct), "text");
   const headers = (d.security_headers ?? {}) as Record<string, unknown>;
@@ -49,16 +58,31 @@ export function ResultsPanel({
       {/* Score hero */}
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-          <ScoreRing score={pct} />
+          {fetchFailed ? (
+            <div
+              data-testid="fetch-failed-notice"
+              className="flex h-[200px] w-[200px] shrink-0 items-center justify-center rounded-full border-4 border-border"
+            >
+              <span className="text-display font-extrabold text-fg-subtle">
+                —
+              </span>
+            </div>
+          ) : (
+            <ScoreRing score={pct} />
+          )}
           <div className="flex flex-col items-center gap-2 sm:items-start">
             <div className="text-title font-bold">{d.agent_name || "—"}</div>
             {d.x_handle_verified && d.x_username ? (
               <div className="text-caption text-fg-subtle">@{d.x_username}</div>
             ) : null}
             <span
-              className={`rounded-md px-3 py-1 text-caption font-bold ${bandColor}`}
+              className={
+                fetchFailed
+                  ? "rounded-md bg-fg-subtle/10 px-3 py-1 text-caption font-bold text-fg-subtle"
+                  : `rounded-md px-3 py-1 text-caption font-bold ${bandColor}`
+              }
             >
-              {d.band || "—"}
+              {fetchFailed ? "UNRATED" : d.band || "—"}
             </span>
             <OnchainStatus registered={d.acp_registered as boolean | null} />
             {d.verdict ? (
@@ -77,7 +101,7 @@ export function ResultsPanel({
 
       {/* Metrics strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Metric label="Final Score" value={Math.round(pct)} />
+        <Metric label="Final Score" value={fetchFailed ? "—" : Math.round(pct)} />
         <Metric label="Critical Fails" value={d.critical_fails ?? "—"} />
         <Metric label="Security Headers" value={`${secHeaderCount}/9`} />
         <Metric label="Checks Run" value={d.controls.length || "—"} />
