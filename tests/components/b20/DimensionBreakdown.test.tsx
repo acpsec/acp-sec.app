@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 
 import { DimensionBreakdown } from "@/components/b20/DimensionBreakdown";
 import type { B20ScanResult } from "@/lib/api/types";
-import { b20ScanResultFixture } from "../../fixtures/b20";
+import {
+  b20NoEvidenceFixture,
+  b20ScanResultFixture,
+} from "../../fixtures/b20";
 
 async function expand() {
   const user = userEvent.setup();
@@ -69,5 +72,50 @@ describe("DimensionBreakdown", () => {
       screen.getByRole("button", { name: /Dimension Breakdown/ }),
     );
     expect(screen.getByText("unrated")).toBeInTheDocument();
+  });
+
+  // ── Feature 1: unrated score display ─────────────────────────────────────
+
+  it("shows — instead of score/100 for an unrated dimension", async () => {
+    const user = userEvent.setup();
+    const result: B20ScanResult = {
+      ...b20ScanResultFixture,
+      unrated_dimensions: ["issuer_authority"],
+    };
+    render(<DimensionBreakdown result={result} />);
+    await user.click(screen.getByRole("button", { name: /Dimension Breakdown/ }));
+    // unrated issuer_authority (score 60) must not show its score
+    expect(screen.queryByText("60/100")).not.toBeInTheDocument();
+    // the dash placeholder appears exactly once
+    expect(screen.getAllByText("—")).toHaveLength(1);
+    // rated dimensions still show their scores
+    expect(screen.getByText("85/100")).toBeInTheDocument();
+  });
+
+  it("keeps score/100 visible for all rated dimensions", async () => {
+    await expand();
+    // Fixture has all dims rated — every score label is present
+    const panel = screen.getByTestId("layer-2").textContent ?? "";
+    expect(panel).toContain("60/100");
+    expect(panel).toContain("85/100");
+    expect(panel).not.toContain("—");
+  });
+
+  // ── Feature 2: read_diagnostics ──────────────────────────────────────────
+
+  it("renders read_diagnostics text beneath an unrated dimension", async () => {
+    const user = userEvent.setup();
+    render(<DimensionBreakdown result={b20NoEvidenceFixture} />);
+    await user.click(screen.getByRole("button", { name: /Dimension Breakdown/ }));
+    // The no-evidence fixture has the same diagnostic for issuer_authority + transfer_policy
+    const items = screen.getAllByText(/role holders not determinable from logs/i);
+    expect(items.length).toBeGreaterThan(0);
+  });
+
+  it("renders no diagnostic text when read_diagnostics is absent", async () => {
+    await expand();
+    // b20ScanResultFixture has no read_diagnostics field
+    expect(screen.queryByText(/not determinable/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/getLogs/i)).not.toBeInTheDocument();
   });
 });

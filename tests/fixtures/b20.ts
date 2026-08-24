@@ -1,6 +1,15 @@
 import { ApiError } from "@/lib/api/errors";
 import type { B20ErrorCode, B20ScanResult } from "@/lib/api/types";
 
+import withEvidenceRaw from "./b20-with-evidence.json";
+import noEvidenceRaw from "./b20-no-evidence.json";
+
+/** Token with three confirmed role holders (DEFAULT_ADMIN/MINT/BURN) and state evidence. */
+export const b20WithEvidenceFixture = withEvidenceRaw as unknown as B20ScanResult;
+
+/** Token with three unrated dimensions, populated read_diagnostics, empty evidence.roles. */
+export const b20NoEvidenceFixture = noEvidenceRaw as unknown as B20ScanResult;
+
 /**
  * A realistic `B20ScanResult` fixture, faithful to the live engine
  * (`acpsec_api/b20/`): the five real dimension keys and their 0–1 fractional
@@ -60,6 +69,7 @@ export const b20ScanResultFixture: B20ScanResult = {
   issuer_powers: {
     can_freeze: false,
     can_seize: null,
+    can_burn_blocked: null,
     can_pause: true,
     can_mint_unbounded: false,
     supply_cap: "1000000",

@@ -247,8 +247,50 @@ export type OnchainCheckResponse = { ok: true; data: OnchainResult };
 // (not scanner-token gated), and — unlike the {ok,data} endpoints — returns a
 // bare {error, detail} body on failure (no envelope).
 
+// ── B20 on-chain evidence (Phase 1) ───────────────────────────────────────
+// Mirrors acpsec_api/b20/models.py evidence types. All fields are optional at
+// the type level so old cached responses (pre-Phase-1) parse without error.
+
+/** A claim backed by a log event (role grant/revoke, announcement). */
+export type B20EventEvidence = {
+  kind: "event";
+  tx_hash: string | null;
+  block_number: number | null;
+  log_index: number | null;
+};
+
+/** A claim backed by an eth_call at a specific block (re-runnable to verify). */
+export type B20StateEvidence = {
+  kind: "state";
+  block_number: number | null;
+  raw_value: string | null;
+  confirmed: boolean | null;
+};
+
+/** A current role holder with grant provenance and hasRole cross-check. */
+export type B20RoleHolderEvidence = {
+  role: string | null; // human name from ROLE_NAMES ("DEFAULT_ADMIN" | "MINT" | "BURN" | …)
+  address: string;
+  grant: B20EventEvidence | null;
+  revoke: B20EventEvidence | null;
+  has_role: B20StateEvidence | null;
+  discrepancy: boolean; // true when log replay says held but hasRole() disagrees
+};
+
+/** Top-level evidence block. `roles` is keyed by role hash (lowercase bytes32). */
+export type B20Evidence = {
+  as_of_block: number | null;
+  roles: Record<string, B20RoleHolderEvidence[]>;
+  announcements: B20EventEvidence[];
+  state: Record<string, B20StateEvidence>; // key = field name (supply_cap, decimals…)
+};
+
 /** One finding inside a dimension. `severity`: CRITICAL | High | Medium | Low. */
-export type B20Finding = { severity: string; detail: string };
+export type B20Finding = {
+  severity: string;
+  detail: string;
+  evidence?: B20StateEvidence | null; // state evidence the finding is derived from
+};
 
 /** A scored dimension (Layer 2). */
 export type B20Dimension = {
@@ -261,6 +303,7 @@ export type B20Dimension = {
 export type B20IssuerPowers = {
   can_freeze: boolean | null;
   can_seize: boolean | null;
+  can_burn_blocked: boolean | null; // blocked-burn (distinct from seize)
   can_pause: boolean | null;
   can_mint_unbounded: boolean | null;
   supply_cap: string | null;
@@ -286,6 +329,7 @@ export type B20ScanResult = {
   rated: boolean;
   multiplier: number; // 1.0 all-rated, else 0.5
   unrated_dimensions: string[];
+  read_diagnostics?: Record<string, string>; // keyed by dimension name; absent on old responses
   is_critical: boolean;
   critical_reasons: string[];
   dimensions: Record<string, B20Dimension>;
@@ -293,6 +337,7 @@ export type B20ScanResult = {
   deployed_via_factory: string | null;
   scanner_version: string;
   scanned_at: string; // ISO-8601 UTC
+  evidence?: B20Evidence; // absent on old cached responses
 };
 
 /** Request body. `chain_id` ∈ {8453, 84532}; the client defaults it to Base

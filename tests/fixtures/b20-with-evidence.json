@@ -1,0 +1,183 @@
+{
+    "token": "0xb2000000000000000000002d0ba3164cc74f58b7",
+    "chain_id": 8453,
+    "variant": "ASSET",
+    "name": null,
+    "symbol": null,
+    "decimals": 8,
+    "currency_code": null,
+    "trust_score": 22,
+    "raw_score": 45,
+    "grade": "F",
+    "rated": false,
+    "multiplier": 0.5,
+    "unrated_dimensions": [
+        "transfer_policy"
+    ],
+    "read_diagnostics": {},
+    "is_critical": true,
+    "critical_reasons": [
+        "uncapped_mint: supply cap equals type(uint128).max (infinite mint)",
+        "single_eoa_admin: DEFAULT_ADMIN_ROLE held by a single EOA without multisig"
+    ],
+    "dimensions": {
+        "issuer_authority": {
+            "score": 45.0,
+            "weight": 0.3,
+            "findings": [
+                {
+                    "severity": "High",
+                    "detail": "admin role controlled by a non-multisig EOA",
+                    "evidence": null
+                }
+            ]
+        },
+        "supply_integrity": {
+            "score": 30.0,
+            "weight": 0.25,
+            "findings": [
+                {
+                    "severity": "High",
+                    "detail": "uncapped supply: cap equals type(uint128).max (infinite mint)",
+                    "evidence": null
+                },
+                {
+                    "severity": "Low",
+                    "detail": "burn is enabled",
+                    "evidence": null
+                }
+            ]
+        },
+        "transfer_policy": {
+            "score": 75.0,
+            "weight": 0.2,
+            "findings": [
+                {
+                    "severity": "Medium",
+                    "detail": "freeze capability active",
+                    "evidence": null
+                },
+                {
+                    "severity": "Medium",
+                    "detail": "PolicyRegistry active (transfers gated)",
+                    "evidence": null
+                }
+            ]
+        },
+        "variant_config": {
+            "score": 100.0,
+            "weight": 0.15,
+            "findings": []
+        },
+        "origin_transparency": {
+            "score": 90.0,
+            "weight": 0.1,
+            "findings": [
+                {
+                    "severity": "Low",
+                    "detail": "no on-chain announcement events",
+                    "evidence": null
+                }
+            ]
+        }
+    },
+    "issuer_powers": {
+        "can_freeze": true,
+        "can_seize": null,
+        "can_burn_blocked": null,
+        "can_pause": null,
+        "can_mint_unbounded": true,
+        "supply_cap": "340282366920938463463374607431768211455",
+        "admin_addresses": [
+            "0x38467be00970af18076fd08f6b4cf38ba91572b1"
+        ],
+        "admin_is_multisig": false,
+        "mint_role_holders": [
+            "0xd1ca4dacdf3231011d175351f1f02d15c7c5664c"
+        ],
+        "pause_role_holders": []
+    },
+    "deployed_via_factory": "0xB20f000000000000000000000000000000000000",
+    "scanner_version": "0.1.0",
+    "scanned_at": "2026-08-20T08:18:47Z",
+    "evidence": {
+        "as_of_block": 50212270,
+        "roles": {
+            "0x0000000000000000000000000000000000000000000000000000000000000000": [
+                {
+                    "role": "DEFAULT_ADMIN",
+                    "address": "0x38467be00970af18076fd08f6b4cf38ba91572b1",
+                    "grant": {
+                        "kind": "event",
+                        "tx_hash": "0x21cf9d7b81f36a196db463e63cf34c3478f2a325caa9d64a46780cd42dbfdf77",
+                        "block_number": 49145218,
+                        "log_index": 71
+                    },
+                    "revoke": null,
+                    "has_role": {
+                        "kind": "state",
+                        "block_number": 50212270,
+                        "raw_value": null,
+                        "confirmed": true
+                    },
+                    "discrepancy": false
+                }
+            ],
+            "0x154c00819833dac601ee5ddded6fda79d9d8b506b911b3dbd54cdb95fe6c3686": [
+                {
+                    "role": "MINT",
+                    "address": "0xd1ca4dacdf3231011d175351f1f02d15c7c5664c",
+                    "grant": {
+                        "kind": "event",
+                        "tx_hash": "0x9f3b2ad542b020e505fba5332e545653d96e9f6120aab474f3b6364c33fab230",
+                        "block_number": 49145440,
+                        "log_index": 272
+                    },
+                    "revoke": null,
+                    "has_role": {
+                        "kind": "state",
+                        "block_number": 50212270,
+                        "raw_value": null,
+                        "confirmed": true
+                    },
+                    "discrepancy": false
+                }
+            ],
+            "0xe97b137254058bd94f28d2f3eb79e2d34074ffb488d042e3bc958e0a57d2fa22": [
+                {
+                    "role": "BURN",
+                    "address": "0xd1ca4dacdf3231011d175351f1f02d15c7c5664c",
+                    "grant": {
+                        "kind": "event",
+                        "tx_hash": "0x87e7f2b7a3590c0fdfc7c4a96481000342a446549d2b159caae40d28e878b1e2",
+                        "block_number": 49145602,
+                        "log_index": 507
+                    },
+                    "revoke": null,
+                    "has_role": {
+                        "kind": "state",
+                        "block_number": 50212270,
+                        "raw_value": null,
+                        "confirmed": true
+                    },
+                    "discrepancy": false
+                }
+            ]
+        },
+        "announcements": [],
+        "state": {
+            "supply_cap": {
+                "kind": "state",
+                "block_number": 50212270,
+                "raw_value": "0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff",
+                "confirmed": null
+            },
+            "decimals": {
+                "kind": "state",
+                "block_number": 50212270,
+                "raw_value": "0x0000000000000000000000000000000000000000000000000000000000000008",
+                "confirmed": null
+            }
+        }
+    }
+}
