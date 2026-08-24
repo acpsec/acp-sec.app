@@ -40,6 +40,14 @@ export function ConfirmPanel({ onScan, onBack, scanning }: ConfirmPanelProps) {
   const profile = lookup?.data;
   const scrapeFailed = profile?.source === "failed" || Boolean(profile?.error);
 
+  // Prefer avatar_display_url (new field) over avatar_url (legacy). Both null
+  // and undefined fall through to avatar_url; empty string → null (no image).
+  // Never fall through to a default image — absence of data must show absence.
+  const avatarSrc = profile
+    ? (profile.avatar_display_url ?? (profile.avatar_url || null))
+    : null;
+  const avatarReason = profile?.avatar_source_reason ?? null;
+
   return (
     <div className="rounded-2xl border border-border bg-surface p-6">
       <div className="text-body font-bold">✅ Confirm Agent Details</div>
@@ -50,16 +58,24 @@ export function ConfirmPanel({ onScan, onBack, scanning }: ConfirmPanelProps) {
       {/* Profile preview */}
       {profile ? (
         <div className="mb-5 flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-bg text-2xl">
-            {profile.avatar_url ? (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-bg">
+            {avatarSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={profile.avatar_url}
+                src={avatarSrc}
                 alt={`${profile.username} avatar`}
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span aria-hidden>🤖</span>
+              <div
+                data-testid="avatar-unavailable"
+                title={avatarReason ?? "Avatar unavailable"}
+                className="flex h-full w-full items-center justify-center"
+              >
+                <span className="text-body text-fg-subtle" aria-hidden>
+                  ?
+                </span>
+              </div>
             )}
           </div>
           <div className="min-w-0 flex-1">
@@ -69,6 +85,14 @@ export function ConfirmPanel({ onScan, onBack, scanning }: ConfirmPanelProps) {
             <div className="text-caption text-fg-subtle">
               @{profile.username}
             </div>
+            {avatarReason ? (
+              <div
+                data-testid="avatar-reason"
+                className="mt-0.5 text-micro text-fg-subtle"
+              >
+                {avatarReason}
+              </div>
+            ) : null}
             {profile.bio ? (
               <div className="mt-1 text-caption text-fg-muted">{profile.bio}</div>
             ) : null}

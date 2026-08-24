@@ -189,7 +189,12 @@ export type ScannerProfile = {
   display_name: string;
   bio: string;
   website: string;
+  /** Legacy field — present on all responses. Empty string when unavailable. */
   avatar_url: string;
+  /** Resolved display URL (new field). null = avatar could not be fetched. */
+  avatar_display_url?: string | null;
+  /** Human-readable reason when avatar_display_url is null. */
+  avatar_source_reason?: string | null;
   source: string;
   error?: string | null;
   [key: string]: unknown;
