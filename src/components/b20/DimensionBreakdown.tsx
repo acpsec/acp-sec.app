@@ -24,7 +24,8 @@ const LABELS: Record<string, string> = {
 };
 
 /** Per-dimension bar colour (0–100, b20's own cutoffs — distinct from the tier scheme). */
-function barColor(score: number): string {
+function barColor(score: number | null): string {
+  if (score == null) return "bg-fg-subtle";
   if (score >= 75) return "bg-success";
   if (score >= 60) return "bg-warning-alt";
   if (score >= 40) return "bg-warning";
@@ -61,7 +62,8 @@ export function DimensionBreakdown({ result }: { result: B20ScanResult }) {
           {ORDER.map((key) => {
             const dim = result.dimensions[key];
             if (!dim) return null; // dimension absent from this scan — skip
-            const isUnrated = unrated.has(key);
+            // Prefer per-dimension rated flag (≥ 0.6.0); fall back to list for old responses.
+            const isUnrated = dim.rated === false || unrated.has(key);
             return (
               <div key={key}>
                 <div className="flex items-center justify-between gap-3">
@@ -84,14 +86,14 @@ export function DimensionBreakdown({ result }: { result: B20ScanResult }) {
                 <div
                   className="mt-2 h-2 w-full overflow-hidden rounded-full bg-border"
                   role="progressbar"
-                  aria-valuenow={dim.score}
+                  aria-valuenow={dim.score ?? undefined}
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-label={`${LABELS[key] ?? key} score`}
                 >
                   <div
                     className={`h-full rounded-full ${isUnrated ? "bg-fg-subtle" : barColor(dim.score)}`}
-                    style={{ width: `${Math.max(0, Math.min(100, dim.score))}%` }}
+                    style={{ width: `${isUnrated ? 0 : Math.max(0, Math.min(100, dim.score ?? 0))}%` }}
                   />
                 </div>
 
