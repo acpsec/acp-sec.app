@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ConfirmPanel } from "@/components/scanner/ConfirmPanel";
-import type { ScannerLookupResponse } from "@/lib/api/types";
+import type { ScannerLookupResponse, ScannerProfile } from "@/lib/api/types";
 import { useScannerStore } from "@/lib/stores/scannerStore";
 
 const LOOKUP: ScannerLookupResponse = {
@@ -76,5 +76,125 @@ describe("ConfirmPanel", () => {
     renderPanel(true);
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "⏳ Scanning…" })).toBeDisabled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Avatar rendering
+// ---------------------------------------------------------------------------
+// Rule: absence-of-avatar must NEVER render a generic robot icon.
+// When no avatar is available (avatar_display_url null, or avatar_url empty),
+// show a distinct "avatar-unavailable" placeholder + optional reason text.
+// When a URL is present, render <img> exactly as before (both-shapes guard).
+// ---------------------------------------------------------------------------
+
+function lookup(profile: ScannerProfile): ScannerLookupResponse {
+  return { ok: true, data: profile };
+}
+
+function renderAvatar(profile: ScannerProfile) {
+  useScannerStore.getState().reset();
+  useScannerStore.getState().beginConfirm(lookup(profile));
+  render(
+    <ConfirmPanel onScan={vi.fn()} onBack={vi.fn()} scanning={false} />,
+  );
+}
+
+// @grok live example: Nitter down, avatar_display_url null, reason surfaced
+const GROK: ScannerProfile = {
+  username: "grok",
+  display_name: "Grok",
+  bio: "AI assistant by xAI",
+  website: "",
+  avatar_url: "",
+  avatar_display_url: null,
+  avatar_source_reason:
+    "Nitter unavailable and unavatar returned no image",
+  source: "failed",
+  error: "Could not reach any Nitter instance.",
+};
+
+// Normal scan — Nitter succeeded, avatar URL present in both fields
+const WITH_AVATAR: ScannerProfile = {
+  username: "aixbt_agent",
+  display_name: "aixbt",
+  bio: "an onchain agent",
+  website: "https://aixbt.tech",
+  avatar_url: "https://nitter.poast.org/pic/profile_images/aixbt.jpg",
+  avatar_display_url: "https://nitter.poast.org/pic/profile_images/aixbt.jpg",
+  source: "nitter",
+};
+
+// Old backend shape — avatar_display_url absent, avatar_url populated
+const OLD_WITH_AVATAR: ScannerProfile = {
+  username: "agentx",
+  display_name: "Agent X",
+  bio: "",
+  website: "",
+  avatar_url: "https://pbs.twimg.com/profile_images/agentx.jpg",
+  source: "nitter",
+};
+
+// Old backend shape — avatar_display_url absent, avatar_url empty (Nitter failed)
+const OLD_NO_AVATAR: ScannerProfile = {
+  username: "agenty",
+  display_name: "Agent Y",
+  bio: "",
+  website: "",
+  avatar_url: "",
+  source: "failed",
+  error: "Could not reach any Nitter instance.",
+};
+
+describe("avatar rendering", () => {
+  it("shows avatar-unavailable placeholder when avatar_display_url is null", () => {
+    renderAvatar(GROK);
+    expect(screen.getByTestId("avatar-unavailable")).toBeInTheDocument();
+  });
+
+  it("never renders the robot icon when avatar is unavailable", () => {
+    renderAvatar(GROK);
+    expect(screen.queryByText("🤖")).not.toBeInTheDocument();
+  });
+
+  it("shows avatar_source_reason beneath the placeholder", () => {
+    renderAvatar(GROK);
+    expect(screen.getByTestId("avatar-reason")).toHaveTextContent(
+      "Nitter unavailable and unavatar returned no image",
+    );
+  });
+
+  it("renders <img> with correct src when avatar_display_url is a URL", () => {
+    renderAvatar(WITH_AVATAR);
+    const img = screen.getByRole("img", { name: /avatar/i });
+    expect(img).toHaveAttribute(
+      "src",
+      "https://nitter.poast.org/pic/profile_images/aixbt.jpg",
+    );
+  });
+
+  it("does not show avatar-unavailable when avatar is present", () => {
+    renderAvatar(WITH_AVATAR);
+    expect(screen.queryByTestId("avatar-unavailable")).not.toBeInTheDocument();
+  });
+
+  it("old shape: renders <img> from avatar_url when avatar_display_url is absent", () => {
+    renderAvatar(OLD_WITH_AVATAR);
+    const img = screen.getByRole("img", { name: /avatar/i });
+    expect(img).toHaveAttribute(
+      "src",
+      "https://pbs.twimg.com/profile_images/agentx.jpg",
+    );
+  });
+
+  it("old shape: shows placeholder (not robot) when avatar_url is empty", () => {
+    renderAvatar(OLD_NO_AVATAR);
+    expect(screen.getByTestId("avatar-unavailable")).toBeInTheDocument();
+    expect(screen.queryByText("🤖")).not.toBeInTheDocument();
+  });
+
+  it("does not render avatar-reason when avatar_source_reason is absent", () => {
+    renderAvatar(OLD_NO_AVATAR);
+    expect(screen.queryByTestId("avatar-reason")).not.toBeInTheDocument();
   });
 });
