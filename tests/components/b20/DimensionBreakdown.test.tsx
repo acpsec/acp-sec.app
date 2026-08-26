@@ -118,4 +118,57 @@ describe("DimensionBreakdown", () => {
     expect(screen.queryByText(/not determinable/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/getLogs/i)).not.toBeInTheDocument();
   });
+
+  // ── Gap 1 frontend companion: null score tolerance ────────────────────────
+  // Consumer-before-producer rule: these tests must pass BEFORE the backend
+  // ships score:null. They use dim.rated (new per-dim flag) rather than relying
+  // solely on unrated_dimensions so the component handles both old and new shapes.
+
+  it("shows — for a null score dimension using dim.rated (not list alone)", async () => {
+    const user = userEvent.setup();
+    // Simulate new backend shape: score:null, rated:false — but unrated_dimensions
+    // list is intentionally empty to prove the component does NOT rely on it alone.
+    const result: B20ScanResult = {
+      ...b20ScanResultFixture,
+      unrated_dimensions: [],
+      dimensions: {
+        ...b20ScanResultFixture.dimensions,
+        issuer_authority: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          score: null as any,
+          rated: false,
+          weight: 0.3,
+          findings: [],
+        },
+      },
+    };
+    render(<DimensionBreakdown result={result} />);
+    await user.click(screen.getByRole("button", { name: /Dimension Breakdown/ }));
+    expect(screen.getAllByText("—")).toHaveLength(1);
+    expect(screen.queryByText(/null\/100/)).not.toBeInTheDocument();
+  });
+
+  it("null score renders as unrated (muted bar, not danger), not as a genuine 0 score", async () => {
+    // Current code derives isUnrated from unrated_dimensions list. With an empty
+    // list and dim.rated=false, barColor(null) returns "bg-danger" (null fails all
+    // comparisons and falls to the final branch) — same style as a real 0 score.
+    // The component must check dim.rated, not only the list.
+    const user = userEvent.setup();
+    const result: B20ScanResult = {
+      ...b20ScanResultFixture,
+      unrated_dimensions: [], // no list gate — forces reliance on dim.rated
+      dimensions: {
+        ...b20ScanResultFixture.dimensions,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        issuer_authority: { score: null as any, rated: false, weight: 0.3, findings: [] },
+      },
+    };
+    render(<DimensionBreakdown result={result} />);
+    await user.click(screen.getByRole("button", { name: /Dimension Breakdown/ }));
+    const bars = screen.getAllByRole("progressbar");
+    const issuerBar = bars[0]; // issuer_authority is first in ORDER
+    // null is "we didn't measure this" — must use muted color, not danger (real 0)
+    expect(issuerBar.firstElementChild).not.toHaveClass("bg-danger");
+    expect(issuerBar.firstElementChild).toHaveClass("bg-fg-subtle");
+  });
 });

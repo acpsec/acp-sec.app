@@ -302,7 +302,10 @@ export type B20Finding = {
 
 /** A scored dimension (Layer 2). */
 export type B20Dimension = {
-  score: number;
+  /** null when the dimension is unrated (new backend shape ≥ 0.6.0). */
+  score: number | null;
+  /** false when unrated; absent on old responses — treat absent as true. */
+  rated?: boolean;
   weight: number;
   findings: B20Finding[];
 };

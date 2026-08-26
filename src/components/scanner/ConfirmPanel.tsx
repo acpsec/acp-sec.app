@@ -85,7 +85,7 @@ export function ConfirmPanel({ onScan, onBack, scanning }: ConfirmPanelProps) {
             <div className="text-caption text-fg-subtle">
               @{profile.username}
             </div>
-            {avatarReason ? (
+            {!avatarSrc && avatarReason ? (
               <div
                 data-testid="avatar-reason"
                 className="mt-0.5 text-micro text-fg-subtle"

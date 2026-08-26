@@ -146,6 +146,18 @@ const OLD_NO_AVATAR: ScannerProfile = {
   error: "Could not reach any Nitter instance.",
 };
 
+// @grok live example: Nitter down, unavatar fallback SUCCEEDED — url resolves, reason present
+const UNAVATAR_FALLBACK_SUCCEEDED: ScannerProfile = {
+  username: "grok",
+  display_name: "Grok",
+  bio: "AI assistant by xAI",
+  website: "",
+  avatar_url: "",
+  avatar_display_url: "https://unavatar.io/twitter/grok",
+  avatar_source_reason: "Nitter unavailable, used unavatar",
+  source: "unavatar",
+};
+
 describe("avatar rendering", () => {
   it("shows avatar-unavailable placeholder when avatar_display_url is null", () => {
     renderAvatar(GROK);
@@ -195,6 +207,17 @@ describe("avatar rendering", () => {
 
   it("does not render avatar-reason when avatar_source_reason is absent", () => {
     renderAvatar(OLD_NO_AVATAR);
+    expect(screen.queryByTestId("avatar-reason")).not.toBeInTheDocument();
+  });
+
+  it("renders <img> with correct src when unavatar fallback resolved a URL", () => {
+    renderAvatar(UNAVATAR_FALLBACK_SUCCEEDED);
+    const img = screen.getByRole("img", { name: /avatar/i });
+    expect(img).toHaveAttribute("src", "https://unavatar.io/twitter/grok");
+  });
+
+  it("does not show avatar-reason when avatar loaded via fallback (url resolved, reason present)", () => {
+    renderAvatar(UNAVATAR_FALLBACK_SUCCEEDED);
     expect(screen.queryByTestId("avatar-reason")).not.toBeInTheDocument();
   });
 });
